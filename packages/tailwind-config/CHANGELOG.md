@@ -1,5 +1,12 @@
 # @baneung-pack/tailwind-config
 
+## 0.0.2
+
+### Patch Changes
+
+- Updated dependencies
+  - @baneung-pack/tokens@1.0.1
+
 ## 0.0.1
 
 ### Patch Changes

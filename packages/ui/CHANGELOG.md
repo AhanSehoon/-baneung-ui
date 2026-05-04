@@ -1,5 +1,12 @@
 # @baneung-pack/ui
 
+## 1.0.1
+
+### Patch Changes
+
+- 각 패키지에 npm 페이지용 README 추가. 설치/사용법/컴포넌트 목록(@baneung-pack/ui),
+  토큰 카테고리(@baneung-pack/tokens) 안내. 코드 변경 없음.
+
 ## 1.0.0
 
 ### Major Changes

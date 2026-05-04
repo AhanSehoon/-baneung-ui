@@ -1,6 +1,6 @@
 {
   "name": "@baneung-pack/tailwind-config",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "description": "공유 Tailwind v4 프리셋 — @baneung-pack/tokens 매핑",
   "type": "module",
