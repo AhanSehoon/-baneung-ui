@@ -4,19 +4,27 @@
  * Tailwind v4 CLI가 이 파일을 입력으로 dist/styles.css를 생성합니다.
  * src/components/** 의 클래스 사용을 스캔해 utility를 트리쉐이크합니다.
  *
+ * # CSS 격리 (Cascade Layers)
+ * 모든 라이브러리 스타일을 `@layer baneung`으로 감싼다.
+ * 소비자는 자신의 글로벌 CSS를 `@layer app`으로 감싸고
+ * 최상단에서 `@layer baneung, app;`(앱 우선) 또는 `@layer app, baneung;`
+ * (라이브러리 우선)으로 명시 우선순위를 결정한다.
+ * 자세한 사용법은 README "CSS 격리" 섹션 참고.
+ *
  * 포함 내용:
  *  1) Pretendard Variable 폰트(CDN, @import는 모든 규칙보다 먼저)
- *  2) Tailwind 코어
- *  3) @baneung-pack/tokens CSS 변수 (라이트 + 다크)
- *  4) @theme inline — 토큰을 짧고 의미 있는 Tailwind 키로 매핑
- *  5) 베이스 reset + 포커스 + 한글 IME + prefers-reduced-motion
+ *  2) Tailwind 코어 (layer(baneung))
+ *  3) @baneung-pack/tokens CSS 변수 (layer(baneung))
+ *  4) @theme inline — Tailwind 요구사항으로 top-level (layer 내 불가)
+ *  5) 베이스 reset (@layer baneung)
  */
 
 /* CSS 스펙상 URL @import는 모든 다른 규칙보다 먼저 와야 합니다. */
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css');
 
-@import 'tailwindcss';
-@import '@baneung-pack/tokens/css';
+/* layer(baneung) — Tailwind v4 + 토큰의 모든 출력을 baneung 레이어로 격리. */
+@import 'tailwindcss' layer(baneung);
+@import '@baneung-pack/tokens/css' layer(baneung);
 
 /*
  * @theme inline — :root의 CSS 변수를 Tailwind utility로 노출.
@@ -75,8 +83,9 @@
 /*
  * 베이스 reset.
  * Tailwind preflight에 더해 바능 디자인 시스템 기본값을 덧입힘.
+ * `@layer baneung`로 감싸서 Tailwind 출력과 같은 레이어에 위치.
  */
-@layer base {
+@layer baneung {
   *,
   *::before,
   *::after {

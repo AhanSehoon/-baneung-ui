@@ -1,5 +1,16 @@
 # @baneung-pack/ui
 
+## 1.0.2
+
+### Patch Changes
+
+- CSS Cascade Layers로 스타일 격리: 라이브러리의 모든 스타일을
+  `@layer baneung` 안에 wrap. 소비자 프로젝트의 글로벌 CSS가 의도치 않게
+  컴포넌트 스타일을 덮어쓰는 문제 해결. 자세한 사용법은 README의
+  "CSS 격리 (Cascade Layers)" 섹션 참고.
+
+  README에 데모 사이트 링크 추가: https://baneung-ui-docs-op7v.vercel.app
+
 ## 1.0.1
 
 ### Patch Changes

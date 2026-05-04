@@ -1,6 +1,6 @@
 {
   "name": "@baneung-pack/ui",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": false,
   "description": "바능 디자인 시스템 React 컴포넌트 라이브러리",
   "type": "module",

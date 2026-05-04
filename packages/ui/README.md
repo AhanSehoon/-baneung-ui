@@ -5,6 +5,8 @@
 [![npm](https://img.shields.io/npm/v/@baneung-pack/ui.svg)](https://www.npmjs.com/package/@baneung-pack/ui)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/AhanSehoon/-baneung-ui/blob/master/LICENSE)
 
+**📖 데모 / 컴포넌트 카탈로그**: https://baneung-ui-docs-op7v.vercel.app
+
 Radix UI primitives 위에 바능 브랜드(각진 디자인, 절제된 컬러, 강한 타이포 위계)를 입힌 React 컴포넌트 라이브러리. **WCAG 2.1 AA 접근성 협상 불가**.
 
 ## 설치
@@ -56,6 +58,36 @@ import { Calendar } from '@baneung-pack/ui/calendar';
 ```tsx
 document.documentElement.dataset.theme = 'dark';
 ```
+
+### CSS 격리 (Cascade Layers)
+
+라이브러리의 모든 스타일은 `@layer baneung` 안에 들어 있습니다. 소비자 프로젝트의 `global.css`가 라이브러리 스타일을 의도치 않게 덮어쓰지 않도록 **레이어 순서를 명시**해 주세요.
+
+```css
+/* 소비자 프로젝트의 global.css 최상단 */
+@layer baneung, app;
+
+/* 본인 프로젝트의 글로벌 스타일은 app 레이어로 감싸기 */
+@layer app {
+  /* 본인의 reset / 글로벌 스타일 */
+  body {
+    background: #f5f5f5;
+  }
+}
+```
+
+위와 같이 선언하면:
+
+- `@layer app` (뒤 선언) → **소비자 스타일 우선** (의도된 override 가능)
+- `@layer baneung` (앞 선언) → 라이브러리 기본값
+
+반대로 **라이브러리를 강제 우선**하고 싶으면 순서를 뒤집습니다:
+
+```css
+@layer app, baneung; /* baneung이 더 우선 */
+```
+
+> 레이어 선언을 안 하면 unlayered 소비자 CSS가 라이브러리 layered CSS보다 우선합니다 (CSS 표준). 라이브러리 의도를 보존하려면 위 한 줄 선언이 필요합니다.
 
 ## 컴포넌트 (58)
 
