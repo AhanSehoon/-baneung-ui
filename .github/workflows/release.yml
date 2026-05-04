@@ -46,37 +46,35 @@ jobs:
         # version PR 단계에서 미리 빌드 가능 여부를 검증해 둔다.
         run: pnpm build
 
-      # ~/.npmrc에 토큰을 literal로 직접 write.
-      # actions/setup-node의 ${NODE_AUTH_TOKEN} env 치환이 changesets/cli가
-      # spawn한 npm 프로세스에 도달하지 않아 ENEEDAUTH로 실패하는 문제를 우회.
+      # 인증 토큰을 npm이 실제 읽는 npmrc 파일에 직접 write.
+      #
+      # actions/setup-node가 NPM_CONFIG_USERCONFIG env를 $RUNNER_TEMP/.npmrc로
+      # 설정해 두기 때문에 npm은 ~/.npmrc가 아니라 그 파일을 읽는다.
+      # 따라서 우리도 그 경로에 토큰을 써야 한다.
+      #
       # GitHub Actions가 로그에서 secret 값을 자동 마스킹하므로 노출 위험 없음.
       - name: Configure npm authentication
         run: |
-          echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
-          echo "registry=https://registry.npmjs.org/" >> ~/.npmrc
-          echo "always-auth=true" >> ~/.npmrc
+          NPMRC_PATH="${NPM_CONFIG_USERCONFIG:-$HOME/.npmrc}"
+          echo "Writing auth to: $NPMRC_PATH"
+          echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > "$NPMRC_PATH"
+          echo "registry=https://registry.npmjs.org/" >> "$NPMRC_PATH"
+          echo "always-auth=true" >> "$NPMRC_PATH"
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      # 디버그: 토큰이 정상 도달했는지 + npm이 어느 사용자로 인식하는지 확인.
-      # 토큰 값 자체는 노출하지 않고 길이/prefix/suffix만 출력.
+      # 디버그: npm이 실제로 어느 npmrc를 읽고 인증되는지 검증.
       - name: Debug npm authentication
         run: |
-          if [ -z "$NPM_TOKEN" ]; then
-            echo "::error::NPM_TOKEN env is empty"
-            exit 1
-          fi
-          echo "NPM_TOKEN length: ${#NPM_TOKEN}"
-          echo "NPM_TOKEN prefix: ${NPM_TOKEN:0:6}"
-          echo "NPM_TOKEN suffix: ${NPM_TOKEN: -4}"
+          NPMRC_PATH="${NPM_CONFIG_USERCONFIG:-$HOME/.npmrc}"
+          echo "NPM_CONFIG_USERCONFIG=$NPM_CONFIG_USERCONFIG"
+          echo "Resolved npmrc path: $NPMRC_PATH"
           echo ""
-          echo "~/.npmrc contents (token redacted):"
-          sed 's/_authToken=.*/_authToken=<REDACTED>/' ~/.npmrc
+          echo "Contents (token redacted):"
+          sed 's/_authToken=.*/_authToken=<REDACTED>/' "$NPMRC_PATH"
           echo ""
           echo "npm whoami:"
           npm whoami || echo "whoami failed"
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create Release Pull Request or Publish
         uses: changesets/action@v1
