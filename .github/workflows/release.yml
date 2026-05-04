@@ -1,0 +1,58 @@
+name: Release
+
+# master에 푸시될 때 동작.
+# - 미반영된 changeset이 있으면: "Version Packages" PR을 자동 생성/갱신.
+# - "Version Packages" PR이 머지되어 changeset이 모두 소진된 상태로 푸시되면: npm publish 실행.
+on:
+  push:
+    branches:
+      - master
+
+# 동시에 여러 release job이 돌지 않도록 직렬화.
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # release commit, tag 생성용
+      pull-requests: write # Version PR 생성/갱신용
+      id-token: write # npm provenance(추후 옵션) 대비
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # changesets가 git history를 봐야 하므로 전체 fetch.
+          fetch-depth: 0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        # changesets/action의 publish 단계에서도 build를 돌리지만,
+        # version PR 단계에서 미리 빌드 가능 여부를 검증해 둔다.
+        run: pnpm build
+
+      - name: Create Release Pull Request or Publish
+        uses: changesets/action@v1
+        with:
+          publish: pnpm release
+          version: pnpm version-packages
+          commit: 'chore(release): version packages'
+          title: 'chore(release): version packages'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
