@@ -46,6 +46,18 @@ jobs:
         # version PR 단계에서 미리 빌드 가능 여부를 검증해 둔다.
         run: pnpm build
 
+      # ~/.npmrc에 토큰을 literal로 직접 write.
+      # actions/setup-node의 ${NODE_AUTH_TOKEN} env 치환이 changesets/cli가
+      # spawn한 npm 프로세스에 도달하지 않아 ENEEDAUTH로 실패하는 문제를 우회.
+      # GitHub Actions가 로그에서 secret 값을 자동 마스킹하므로 노출 위험 없음.
+      - name: Configure npm authentication
+        run: |
+          echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" > ~/.npmrc
+          echo "registry=https://registry.npmjs.org/" >> ~/.npmrc
+          echo "always-auth=true" >> ~/.npmrc
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: Create Release Pull Request or Publish
         uses: changesets/action@v1
         with:
@@ -55,8 +67,4 @@ jobs:
           title: 'chore(release): version packages'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # actions/setup-node가 ~/.npmrc에 자동 생성한 라인이
-          # //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN} 이라
-          # 같은 이름의 env로 토큰을 넘긴다.
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
