@@ -1,0 +1,12 @@
+{
+  "root": true,
+  "extends": ["@baneung-pack/eslint-config/base"],
+  "ignorePatterns": [
+    "**/dist/**",
+    "**/.next/**",
+    "**/.turbo/**",
+    "**/node_modules/**",
+    "**/coverage/**",
+    "pnpm-lock.yaml"
+  ]
+}

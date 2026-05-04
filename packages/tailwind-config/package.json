@@ -1,0 +1,31 @@
+{
+  "name": "@baneung-pack/tailwind-config",
+  "version": "0.0.1",
+  "private": true,
+  "description": "공유 Tailwind v4 프리셋 — @baneung-pack/tokens 매핑",
+  "type": "module",
+  "main": "./preset.ts",
+  "exports": {
+    ".": "./preset.ts",
+    "./preset": "./preset.ts"
+  },
+  "files": [
+    "preset.ts",
+    "README.md"
+  ],
+  "scripts": {
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"no tests yet\"",
+    "clean": "rimraf .turbo"
+  },
+  "dependencies": {
+    "@baneung-pack/tokens": "workspace:*"
+  },
+  "devDependencies": {
+    "@baneung-pack/eslint-config": "workspace:*",
+    "@baneung-pack/tsconfig": "workspace:*",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.7.2"
+  }
+}

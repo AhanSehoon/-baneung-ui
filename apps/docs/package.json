@@ -1,0 +1,35 @@
+{
+  "name": "docs",
+  "version": "0.0.0",
+  "private": true,
+  "description": "@baneung-pack/ui 데모/문서 사이트 (Next.js 15)",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint --max-warnings 0",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"no tests in Phase 0\"",
+    "clean": "rimraf .next .turbo"
+  },
+  "dependencies": {
+    "@baneung-pack/ui": "workspace:*",
+    "next": "^15.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@baneung-pack/eslint-config": "workspace:*",
+    "@baneung-pack/tsconfig": "workspace:*",
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.1",
+    "@types/react-dom": "^19.0.2",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^15.1.0",
+    "rimraf": "^6.0.1",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.7.2"
+  }
+}

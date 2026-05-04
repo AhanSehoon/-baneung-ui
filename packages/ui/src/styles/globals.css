@@ -1,0 +1,128 @@
+/*
+ * @baneung-pack/ui — 글로벌 스타일 진입점.
+ *
+ * Tailwind v4 CLI가 이 파일을 입력으로 dist/styles.css를 생성합니다.
+ * src/components/** 의 클래스 사용을 스캔해 utility를 트리쉐이크합니다.
+ *
+ * 포함 내용:
+ *  1) Pretendard Variable 폰트(CDN, @import는 모든 규칙보다 먼저)
+ *  2) Tailwind 코어
+ *  3) @baneung-pack/tokens CSS 변수 (라이트 + 다크)
+ *  4) @theme inline — 토큰을 짧고 의미 있는 Tailwind 키로 매핑
+ *  5) 베이스 reset + 포커스 + 한글 IME + prefers-reduced-motion
+ */
+
+/* CSS 스펙상 URL @import는 모든 다른 규칙보다 먼저 와야 합니다. */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css');
+
+@import 'tailwindcss';
+@import '@baneung-pack/tokens/css';
+
+/*
+ * @theme inline — :root의 CSS 변수를 Tailwind utility로 노출.
+ * `inline`이라 utility는 var(--...)를 그대로 참조 → [data-theme="dark"] cascade가 자동 반영.
+ *
+ * 짧고 의미적인 키(`canvas`, `foreground`, `border`, `success` ...)로 매핑해
+ * 컴포넌트 클래스가 `bg-canvas text-foreground border-default` 형태로 깔끔하게 작성되도록 함.
+ */
+@theme inline {
+  /* 배경 */
+  --color-canvas: var(--color-bg-canvas);
+  --color-surface: var(--color-bg-surface);
+  --color-surface-strong: var(--color-bg-surface-strong);
+  --color-inverse: var(--color-bg-inverse);
+  --color-overlay: var(--color-bg-overlay);
+
+  /* 텍스트 — `foreground` 계열 */
+  --color-foreground: var(--color-text-primary);
+  --color-foreground-muted: var(--color-text-secondary);
+  --color-foreground-subtle: var(--color-text-tertiary);
+  --color-foreground-inverse: var(--color-text-inverse);
+  --color-link: var(--color-text-link);
+
+  /* 보더 — Tailwind 기본 `border-{name}`과 충돌 없는 키 사용 */
+  --color-border-subtle: var(--color-border-subtle);
+  --color-border-default: var(--color-border-default);
+  --color-border-strong: var(--color-border-strong);
+
+  /* 포커스 링 */
+  --color-ring: var(--color-focus-ring);
+
+  /* 상태 */
+  --color-success: var(--color-status-success);
+  --color-warning: var(--color-status-warning);
+  --color-danger: var(--color-status-danger);
+  --color-info: var(--color-status-info);
+
+  /* 라디우스 — 각진 디자인 강제: none/sm/md만 */
+  --radius-none: var(--radius-none);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+
+  /* 모션 */
+  --duration-fast: var(--motion-duration-fast);
+  --duration-base: var(--motion-duration-base);
+  --duration-slow: var(--motion-duration-slow);
+  --ease-standard: var(--motion-easing-standard);
+  --ease-accelerate: var(--motion-easing-accelerate);
+  --ease-decelerate: var(--motion-easing-decelerate);
+
+  /* 폰트 */
+  --font-sans: var(--typography-font-family-sans);
+  --font-mono: var(--typography-font-family-mono);
+}
+
+/*
+ * 베이스 reset.
+ * Tailwind preflight에 더해 바능 디자인 시스템 기본값을 덧입힘.
+ */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--typography-font-family-sans);
+    font-size: var(--typography-font-size-base);
+    line-height: var(--typography-line-height-body);
+    color: var(--color-text-primary);
+    background-color: var(--color-bg-canvas);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* 키보드 포커스 — 마우스 클릭 포커스는 :focus-visible로 가드 */
+  :focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+  }
+
+  /* 한글 IME 조합 중인 텍스트 — 브라우저 기본 보존 */
+  input[type='text'],
+  input[type='search'],
+  input[type='email'],
+  input[type='url'],
+  textarea {
+    ime-mode: auto;
+  }
+
+  /* Reduced motion — 모든 애니메이션/스크롤 즉시화 */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

@@ -1,0 +1,17 @@
+/*
+ * apps/docs 자체 Tailwind 진입점.
+ *
+ * @baneung-pack/ui/styles.css가 layout.tsx에서 먼저 로드되어 토큰·베이스 리셋·@theme를
+ * 제공합니다. 여기서는 docs 페이지가 사용하는 utility(mx-auto, text-*, flex 등)를
+ * docs 자체 빌드가 트리쉐이크해 포함시키도록 Tailwind 코어만 임포트합니다.
+ *
+ * @baneung-pack/tokens는 ui/styles.css에서 이미 로드되므로 중복 임포트하지 않습니다.
+ *
+ * @source — Tailwind v4의 자동 source 감지가 monorepo 구조에서 누락되는 경우가 있어
+ * apps/docs 안의 모든 .tsx/.ts를 명시적으로 스캔합니다.
+ */
+@import 'tailwindcss';
+
+@source "../app/**/*.{ts,tsx}";
+@source "../components/**/*.{ts,tsx}";
+@source "../lib/**/*.{ts,tsx}";

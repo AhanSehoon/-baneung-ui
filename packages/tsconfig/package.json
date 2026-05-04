@@ -1,0 +1,11 @@
+{
+  "name": "@baneung-pack/tsconfig",
+  "version": "0.0.0",
+  "private": true,
+  "description": "공유 tsconfig 베이스 (base / react-library / nextjs)",
+  "files": [
+    "base.json",
+    "react-library.json",
+    "nextjs.json"
+  ]
+}

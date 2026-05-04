@@ -1,0 +1,5 @@
+{
+  "extends": ["@baneung-pack/eslint-config/next"],
+  "root": true,
+  "ignorePatterns": ["next-env.d.ts", ".next/**"]
+}
