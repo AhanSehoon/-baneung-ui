@@ -60,30 +60,33 @@ export function useGridState<TRow>(
   /**
    * 셀 값 변경. accessor가 함수 컬럼은 set 방법을 모르므로 호출자 측 책임.
    * (호출자는 string key만 넘기도록 제한해야 한다.)
+   *
+   * 주의: onRowChange는 setState updater **밖에서** 호출해야 한다. updater 안에서
+   * 부모 setState를 트리거하면 React가 "rendering 중 다른 컴포넌트 업데이트" 경고를
+   * 발생시킨다 (특히 Strict Mode에서 updater가 두 번 실행되는 경우).
    */
   const editCell = React.useCallback(
     (id: RowId, columnKey: string, value: unknown) => {
-      setRows((prev) => {
-        let changedRow: TRow | undefined;
-        const next = prev.map((row, idx) => {
-          if (getRowId(row, idx) !== id) return row;
-          const updated = { ...(row as Record<string, unknown>), [columnKey]: value } as TRow;
-          changedRow = updated;
-          return updated;
-        });
-        if (changedRow !== undefined) {
-          onRowChange?.(changedRow, id);
-        }
-        return next;
-      });
+      // 1. 미리 새 row를 계산 — onRowChange에 넘기기 위해 closure 밖에서 보관.
+      const idx = rows.findIndex((row, i) => getRowId(row, i) === id);
+      if (idx === -1) return;
+      const target = rows[idx];
+      if (target === undefined) return;
+      const updated = { ...(target as Record<string, unknown>), [columnKey]: value } as TRow;
+
+      // 2. state 업데이트 (updater 안에서는 외부 콜백 호출 금지)
+      setRows((prev) => prev.map((row, i) => (getRowId(row, i) === id ? updated : row)));
       setEditedIds((prev) => {
         if (prev.has(id)) return prev;
         const next = new Set(prev);
         next.add(id);
         return next;
       });
+
+      // 3. 외부 콜백은 state 업데이트 스케줄 후 호출 (setState는 비동기지만 같은 tick).
+      onRowChange?.(updated, id);
     },
-    [getRowId, onRowChange],
+    [rows, getRowId, onRowChange],
   );
 
   const toggleRow = React.useCallback((id: RowId) => {
