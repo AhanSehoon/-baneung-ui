@@ -327,9 +327,10 @@ function GridRow<TRow>({
             aria-selected={isActive || undefined}
             onClick={() => onCellActivate(rowId, col.id)}
             className={cn(
-              // 활성 셀은 ring으로 안쪽 테두리 그려서 layout shift 없이 강조 (AUIGrid 스타일)
-              'cursor-pointer px-3 py-2 text-foreground',
-              isActive && 'relative z-[1] outline outline-2 -outline-offset-2 outline-ring',
+              // td는 항상 relative — 편집 모드 input의 absolute inset-0 기준점.
+              // 활성 셀은 outline으로 안쪽 테두리 그려서 layout shift 없이 강조 (AUIGrid 스타일).
+              'relative cursor-pointer px-3 py-2 text-foreground',
+              isActive && 'z-[1] outline outline-2 -outline-offset-2 outline-ring',
               align === 'right' && 'text-right',
               align === 'center' && 'text-center',
               (!align || align === 'left') && 'text-left',

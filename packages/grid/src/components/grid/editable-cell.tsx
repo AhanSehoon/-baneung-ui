@@ -70,30 +70,40 @@ export function EditableCell({ value, display, align, onCommit }: EditableCellPr
     );
   }
 
+  // 편집 모드: input을 부모 td의 inset-0에 absolute로 깔아 셀 전체를 꽉 채운다
+  // (AUIGrid 스타일). td는 항상 relative여야 한다 (grid.tsx에서 보장).
+  // 부모 td 높이가 input absolute로 인해 collapse되지 않도록 invisible
+  // placeholder를 같이 렌더해서 원래 표시 노드의 크기를 유지한다.
   return (
-    <input
-      ref={inputRef}
-      type="text"
-      value={draft}
-      onChange={(e) => setDraft(e.target.value)}
-      onKeyDown={(e) => {
-        // IME 조합 중 Enter는 commit이 아니라 한글 조합 확정 — 무시한다.
-        if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
-          e.preventDefault();
-          commit();
-        } else if (e.key === 'Escape') {
-          e.preventDefault();
-          cancel();
-        }
-      }}
-      onBlur={commit}
-      className={cn(
-        'w-full bg-canvas px-1 py-0 text-foreground',
-        'border border-ring outline-none',
-        align === 'right' && 'text-right',
-        align === 'center' && 'text-center',
-      )}
-      aria-label="셀 편집"
-    />
+    <>
+      <span aria-hidden="true" className="invisible block min-h-[1.5rem]">
+        {display ?? ' '}
+      </span>
+      <input
+        ref={inputRef}
+        type="text"
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onKeyDown={(e) => {
+          // IME 조합 중 Enter는 commit이 아니라 한글 조합 확정 — 무시한다.
+          if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+            e.preventDefault();
+            commit();
+          } else if (e.key === 'Escape') {
+            e.preventDefault();
+            cancel();
+          }
+        }}
+        onBlur={commit}
+        className={cn(
+          // 셀 가장자리까지 꽉 차도록 absolute inset-0. 내부 padding은 셀 padding과 동일하게.
+          'absolute inset-0 z-10 box-border w-full bg-canvas px-3 py-2 text-foreground',
+          'border-2 border-ring outline-none',
+          align === 'right' && 'text-right',
+          align === 'center' && 'text-center',
+        )}
+        aria-label="셀 편집"
+      />
+    </>
   );
 }
