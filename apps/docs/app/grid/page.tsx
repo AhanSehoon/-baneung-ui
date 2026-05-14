@@ -458,12 +458,111 @@ export default function GridPage() {
                   ['page', 'number', '-', 'controlled 페이지 (1-based)'],
                   ['onPageChange', '(page: number) => void', '-', 'controlled 모드 콜백'],
                   ['emptyState', 'ReactNode', '-', '데이터 없을 때 표시'],
-                  ['getRowId', '(row, idx) => string | number', '-', '행 키 추출 함수'],
+                  [
+                    'getRowId',
+                    '(row, idx) => string | number',
+                    '-',
+                    '행 키 추출. 편집/선택 시 필수 권장',
+                  ],
+                  ['selectable', 'boolean', 'false', '첫 컬럼에 체크박스 자동 추가'],
+                  ['onRowChange', '(row, id) => void', '-', '편집 commit 시 콜백'],
+                  [
+                    'ref',
+                    'Ref<GridHandle<TRow>>',
+                    '-',
+                    'imperative API 접근 (saved/changed/deleted)',
+                  ],
                 ].map(([prop, type, def, desc]) => (
                   <tr key={prop} className="border-b border-border-subtle last:border-b-0">
                     <td className="px-3 py-2 font-mono text-foreground">{prop}</td>
                     <td className="px-3 py-2 font-mono">{type}</td>
                     <td className="px-3 py-2 font-mono">{def}</td>
+                    <td className="px-3 py-2">{desc}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* GridColumn 옵션 */}
+      <Card>
+        <CardHeader>
+          <CardTitle>GridColumn 필드</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="border-b border-border-default">
+                  <th className="px-3 py-2 text-left font-medium">필드</th>
+                  <th className="px-3 py-2 text-left font-medium">타입</th>
+                  <th className="px-3 py-2 text-left font-medium">설명</th>
+                </tr>
+              </thead>
+              <tbody className="text-foreground-muted">
+                {[
+                  ['id', 'string', '컬럼 고유 식별자 (key·정렬·테스트에 사용)'],
+                  ['header', 'ReactNode', '헤더에 표시될 노드'],
+                  ['accessor', 'keyof TRow | (row) => unknown', '행에서 값 추출. 함수면 편집 불가'],
+                  ['width', 'number | string', '셀 너비 (px 또는 CSS)'],
+                  ['align', "'left' | 'center' | 'right'", '컬럼 정렬. 숫자는 보통 right'],
+                  [
+                    'renderer',
+                    "'text' | (value, row) => ReactNode",
+                    "기본 'text'. 함수면 임의 노드",
+                  ],
+                  [
+                    'editable',
+                    'boolean',
+                    '더블클릭으로 인라인 편집 활성. accessor가 string key일 때만 동작',
+                  ],
+                ].map(([field, type, desc]) => (
+                  <tr key={field} className="border-b border-border-subtle last:border-b-0">
+                    <td className="px-3 py-2 font-mono text-foreground">{field}</td>
+                    <td className="px-3 py-2 font-mono">{type}</td>
+                    <td className="px-3 py-2">{desc}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* GridHandle ref 메서드 */}
+      <Card>
+        <CardHeader>
+          <CardTitle>GridHandle (ref API)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="border-b border-border-default">
+                  <th className="px-3 py-2 text-left font-medium">메서드</th>
+                  <th className="px-3 py-2 text-left font-medium">반환</th>
+                  <th className="px-3 py-2 text-left font-medium">설명</th>
+                </tr>
+              </thead>
+              <tbody className="text-foreground-muted">
+                {[
+                  [
+                    'getSavedData()',
+                    'TRow[]',
+                    '편집 반영, 삭제 제외한 현재 데이터 (저장 페이로드)',
+                  ],
+                  ['getChangedData()', 'TRow[]', '편집된 행만 (PATCH 페이로드)'],
+                  ['getDeletedData()', 'TRow[]', '삭제된 행의 원본 스냅샷 (삭제 페이로드)'],
+                  ['getSelectedIds()', '(string | number)[]', '현재 선택된 행 ID 배열'],
+                  ['deleteSelected()', 'void', '선택된 행을 모두 삭제 처리'],
+                  ['clearSelection()', 'void', '선택 해제'],
+                  ['reset()', 'void', '편집·삭제 내역 폐기, 원본 data로 복원'],
+                ].map(([method, ret, desc]) => (
+                  <tr key={method} className="border-b border-border-subtle last:border-b-0">
+                    <td className="px-3 py-2 font-mono text-foreground">{method}</td>
+                    <td className="px-3 py-2 font-mono">{ret}</td>
                     <td className="px-3 py-2">{desc}</td>
                   </tr>
                 ))}
@@ -481,13 +580,13 @@ export default function GridPage() {
         <CardContent>
           <ul className="flex list-disc flex-col gap-1 pl-5 text-sm text-foreground-muted">
             <li>
-              <strong>v0.2</strong>: 빌트인 렌더러 (number-comma, date, dropdown, icon)
+              <strong>v0.3</strong>: 빌트인 셀 렌더러 (number-comma, date-picker, dropdown, icon)
             </li>
             <li>
-              <strong>v0.3</strong>: 더블클릭 인라인 편집 + ref API (saved/changed/deleted 추적)
+              <strong>v0.4</strong>: 정렬·필터·컬럼 리사이즈
             </li>
             <li>
-              <strong>v0.4</strong>: 정렬·필터·다중 선택·컬럼 리사이즈
+              <strong>v0.5</strong>: 행 드래그 순서 변경·그룹·고정 컬럼
             </li>
           </ul>
         </CardContent>
