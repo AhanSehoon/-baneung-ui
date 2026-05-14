@@ -97,8 +97,9 @@ export function EditableCell({ value, display, align, onCommit }: EditableCellPr
         onBlur={commit}
         className={cn(
           // 셀 가장자리까지 꽉 차도록 absolute inset-0. 내부 padding은 셀 padding과 동일하게.
-          'absolute inset-0 z-10 box-border w-full bg-canvas px-3 py-2 text-foreground',
-          'border-2 border-ring outline-none',
+          // border 없음 — 편집 중인 셀은 active 상태이므로 부모 td의 outline이 강조 역할.
+          // 둘 다 그리면 이중선으로 보임.
+          'absolute inset-0 z-10 box-border w-full border-0 bg-canvas px-3 py-2 text-foreground outline-none',
           align === 'right' && 'text-right',
           align === 'center' && 'text-center',
         )}
