@@ -295,6 +295,32 @@ describe('Grid', () => {
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
   });
 
+  // ───────────────────────────────────────────────────────────────────────────
+  // active cell highlight (셀 클릭)
+  // ───────────────────────────────────────────────────────────────────────────
+
+  it('marks clicked cell as active with aria-selected', async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <Grid columns={columns} data={sampleData} getRowId={(r) => r.id} />,
+    );
+
+    // 처음엔 active 셀 없음
+    expect(container.querySelector('td[aria-selected="true"]')).toBeNull();
+
+    // 셀 클릭 → 그 셀이 active
+    await user.click(screen.getByText('사과'));
+    const activeCells = container.querySelectorAll('td[aria-selected="true"]');
+    expect(activeCells.length).toBe(1);
+    expect(activeCells[0]?.textContent).toBe('사과');
+
+    // 다른 셀 클릭 → active 이동
+    await user.click(screen.getByText('2000'));
+    const newActive = container.querySelectorAll('td[aria-selected="true"]');
+    expect(newActive.length).toBe(1);
+    expect(newActive[0]?.textContent).toBe('2000');
+  });
+
   it('getSavedData returns current edited values (excluding deleted)', async () => {
     const user = userEvent.setup();
     const ref = React.createRef<GridHandle<Row>>();

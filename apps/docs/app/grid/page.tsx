@@ -39,7 +39,7 @@ const sampleProducts: Product[] = [
   { id: 8, name: '귀리', category: '곡물', price: 9800, stock: 40 },
 ];
 
-// 가상화 데모용 — 5000행
+// 가상화 데모용 — 5000행. 인덱스 기반 deterministic 값 사용 (SSR/CSR 일치 보장).
 const largeDataset: Product[] = Array.from({ length: 5000 }, (_, i) => {
   const categories: Product['category'][] = ['과일', '채소', '곡물'];
   const cat = categories[i % 3]!;
@@ -47,8 +47,8 @@ const largeDataset: Product[] = Array.from({ length: 5000 }, (_, i) => {
     id: i + 1,
     name: `${cat}-${String(i + 1).padStart(4, '0')}`,
     category: cat,
-    price: Math.floor(Math.random() * 100000) + 500,
-    stock: Math.floor(Math.random() * 500),
+    price: 500 + ((i * 7919) % 100000),
+    stock: (i * 6151) % 500,
   };
 });
 

@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm --filter @baneung-pack/grid typecheck)",
+      "Bash(pnpm --filter @baneung-pack/grid build)",
+      "Bash(pnpm --filter @baneung-pack/grid test)",
+      "Bash(pnpm --filter @baneung-pack/grid lint)",
+      "Bash(pnpm --filter docs typecheck)",
+      "PowerShell($ports = Get-NetTCPConnection -LocalPort 3000,3001,3002 -ErrorAction SilentlyContinue; if \\($ports\\) { $ports | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue } }; Write-Output \"Ports cleared\")",
+      "Bash(rm -f /tmp/docs-dev.log)",
+      "PowerShell(try { $r = \\(Invoke-WebRequest -Uri \"https://registry.npmjs.org/@baneung-pack/grid\" -UseBasicParsing\\).Content | ConvertFrom-Json; Write-Output \\(\"@baneung-pack/grid latest: {0}\" -f $r.'dist-tags'.latest\\) } catch { Write-Output \"404 - not yet\" })",
+      "PowerShell($jobs = Invoke-WebRequest -Uri \"https://api.github.com/repos/AhanSehoon/-baneung-ui/actions/runs/25842526689/jobs\" -UseBasicParsing | ConvertFrom-Json; $jobs.jobs[0].steps | ForEach-Object { Write-Output \\(\"[{0}] {1} \\({2}s\\)\" -f $_.conclusion, $_.name, [int]\\(\\(Get-Date $_.completed_at\\) - \\(Get-Date $_.started_at\\)\\).TotalSeconds\\) })",
+      "PowerShell(try { $prs = \\(Invoke-WebRequest -Uri \"https://api.github.com/repos/AhanSehoon/-baneung-ui/pulls?state=open\" -UseBasicParsing\\).Content | ConvertFrom-Json; if \\($prs.Count -eq 0\\) { Write-Output \"No open PRs\" } else { $prs | Select-Object number, title, html_url | Format-List } } catch { Write-Output \"Error: $\\($_.Exception.Message\\)\" })",
+      "PowerShell($pr = Invoke-WebRequest -Uri \"https://api.github.com/repos/AhanSehoon/-baneung-ui/pulls/1\" -UseBasicParsing | ConvertFrom-Json; Write-Output \\(\"Title: {0}\" -f $pr.title\\); Write-Output \\(\"Branch: {0} -> {1}\" -f $pr.head.ref, $pr.base.ref\\); Write-Output \"\"; Write-Output \"Files changed:\"; $files = Invoke-WebRequest -Uri \"https://api.github.com/repos/AhanSehoon/-baneung-ui/pulls/1/files\" -UseBasicParsing | ConvertFrom-Json; $files | Select-Object filename, status, additions, deletions | Format-Table -AutoSize)",
+      "PowerShell(Get-NetTCPConnection -LocalPort 3000,3001,3002 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }; Write-Output \"ports cleared\")",
+      "PowerShell(try { $r = \\(Invoke-WebRequest -Uri \"https://registry.npmjs.org/@baneung-pack/grid\" -UseBasicParsing\\).Content | ConvertFrom-Json; Write-Output \\(\"latest: {0} | versions: {1}\" -f $r.'dist-tags'.latest, \\($r.versions.PSObject.Properties.Name -join ', '\\)\\) } catch { Write-Output \"404 - not yet\" })",
+      "PowerShell($jobs = Invoke-WebRequest -Uri \"https://api.github.com/repos/AhanSehoon/-baneung-ui/actions/runs/25843280878/jobs\" -UseBasicParsing | ConvertFrom-Json; $jobs.jobs[0].steps | ForEach-Object { Write-Output \\(\"[{0}] {1} \\({2}s\\)\" -f $_.conclusion, $_.name, [int]\\(\\(Get-Date $_.completed_at\\) - \\(Get-Date $_.started_at\\)\\).TotalSeconds\\) })",
+      "PowerShell(try { $prs = \\(Invoke-WebRequest -Uri \"https://api.github.com/repos/AhanSehoon/-baneung-ui/pulls?state=open\" -UseBasicParsing\\).Content | ConvertFrom-Json; if \\($prs.Count -eq 0\\) { Write-Output \"No open PRs\" } else { $prs | Select-Object number, title | Format-Table } } catch { Write-Output \"Error: $\\($_.Exception.Message\\)\" })"
+    ]
+  }
+}

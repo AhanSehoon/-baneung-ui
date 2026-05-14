@@ -88,6 +88,15 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
   // 1. 내부 상태 (편집·삭제·선택)
   const state = useGridState(data, resolveRowId, onRowChange);
 
+  // 1b. active cell — 클릭한 셀에 테두리 highlight (AUIGrid 스타일 current cell)
+  const [activeCell, setActiveCell] = React.useState<{
+    rowId: RowId;
+    columnId: string;
+  } | null>(null);
+  const activateCell = React.useCallback((rowId: RowId, columnId: string) => {
+    setActiveCell({ rowId, columnId });
+  }, []);
+
   // 2. 페이지 상태 — controlled/uncontrolled
   const [internalPage, setInternalPage] = React.useState(1);
   const page = pageProp ?? internalPage;
@@ -222,6 +231,8 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
               selectedIds={state.selectedIds}
               onToggleRow={state.toggleRow}
               onCellCommit={handleCellCommit}
+              activeCell={activeCell}
+              onCellActivate={activateCell}
             />
           ) : (
             <tbody>
@@ -237,6 +248,8 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
                     selected={state.selectedIds.has(id)}
                     onToggle={state.toggleRow}
                     onCellCommit={handleCellCommit}
+                    activeCell={activeCell}
+                    onCellActivate={activateCell}
                   />
                 );
               })}
@@ -268,6 +281,8 @@ interface GridRowProps<TRow> {
   selected: boolean;
   onToggle: (id: RowId) => void;
   onCellCommit: (id: RowId, col: GridColumn<TRow>, value: string) => void;
+  activeCell: { rowId: RowId; columnId: string } | null;
+  onCellActivate: (rowId: RowId, columnId: string) => void;
   height?: number;
 }
 
@@ -279,6 +294,8 @@ function GridRow<TRow>({
   selected,
   onToggle,
   onCellCommit,
+  activeCell,
+  onCellActivate,
   height,
 }: GridRowProps<TRow>) {
   return (
@@ -302,12 +319,17 @@ function GridRow<TRow>({
         // 편집 가능 + accessor가 string key일 때만 EditableCell 사용
         const isEditable = col.editable && typeof col.accessor === 'string';
         const value = getCellValue(col, row);
+        const isActive = activeCell?.rowId === rowId && activeCell.columnId === col.id;
 
         return (
           <td
             key={col.id}
+            aria-selected={isActive || undefined}
+            onClick={() => onCellActivate(rowId, col.id)}
             className={cn(
-              'px-3 py-2 text-foreground',
+              // 활성 셀은 ring으로 안쪽 테두리 그려서 layout shift 없이 강조 (AUIGrid 스타일)
+              'cursor-pointer px-3 py-2 text-foreground',
+              isActive && 'relative z-[1] outline outline-2 -outline-offset-2 outline-ring',
               align === 'right' && 'text-right',
               align === 'center' && 'text-center',
               (!align || align === 'left') && 'text-left',
@@ -344,6 +366,8 @@ interface VirtualizedBodyProps<TRow> {
   selectedIds: Set<RowId>;
   onToggleRow: (id: RowId) => void;
   onCellCommit: (id: RowId, col: GridColumn<TRow>, value: string) => void;
+  activeCell: { rowId: RowId; columnId: string } | null;
+  onCellActivate: (rowId: RowId, columnId: string) => void;
 }
 
 function VirtualizedBody<TRow>({
@@ -356,6 +380,8 @@ function VirtualizedBody<TRow>({
   selectedIds,
   onToggleRow,
   onCellCommit,
+  activeCell,
+  onCellActivate,
 }: VirtualizedBodyProps<TRow>) {
   const items = virtualizer.getVirtualItems();
   const totalSize = virtualizer.getTotalSize();
@@ -386,6 +412,8 @@ function VirtualizedBody<TRow>({
             selected={selectedIds.has(id)}
             onToggle={onToggleRow}
             onCellCommit={onCellCommit}
+            activeCell={activeCell}
+            onCellActivate={onCellActivate}
             height={rowHeight}
           />
         );
