@@ -1,7 +1,7 @@
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as React from 'react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { Grid } from './grid';
 
@@ -579,6 +579,43 @@ describe('Grid', () => {
     expect(screen.getByText('사과')).toBeInTheDocument();
     const deleted = ref.current?.getDeletedData() ?? [];
     expect(deleted[0]?.name).toBe('바나나');
+  });
+
+  it('exportCsv: ref API로 호출 시 Blob URL을 통해 anchor click 발생', async () => {
+    // Spy URL.createObjectURL + anchor click — jsdom에는 둘 다 기본 구현 없음
+    const createObjURL = vi.fn(() => 'blob:mock');
+    const revokeObjURL = vi.fn();
+    const origCreate = URL.createObjectURL;
+    const origRevoke = URL.revokeObjectURL;
+    URL.createObjectURL = createObjURL as unknown as typeof URL.createObjectURL;
+    URL.revokeObjectURL = revokeObjURL as unknown as typeof URL.revokeObjectURL;
+    const clickSpy = vi.fn();
+    const origAppend = document.body.appendChild.bind(document.body);
+    // anchor 생성 가로채서 click 호출 감지
+    const origCreateElement = document.createElement.bind(document);
+    document.createElement = (tagName: string) => {
+      const el = origCreateElement(tagName);
+      if (tagName === 'a') {
+        Object.defineProperty(el, 'click', { value: clickSpy, configurable: true });
+      }
+      return el;
+    };
+
+    try {
+      const ref = React.createRef<GridHandle<Row>>();
+      render(<Grid ref={ref} columns={columns} data={sampleData} getRowId={(r) => r.id} />);
+
+      ref.current?.exportCsv('test.csv');
+
+      expect(createObjURL).toHaveBeenCalledTimes(1);
+      expect(clickSpy).toHaveBeenCalledTimes(1);
+      expect(revokeObjURL).toHaveBeenCalledTimes(1);
+    } finally {
+      URL.createObjectURL = origCreate;
+      URL.revokeObjectURL = origRevoke;
+      document.createElement = origCreateElement;
+      document.body.appendChild = origAppend;
+    }
   });
 
   it('clearSelectedCells: 선택 셀 값을 빈 문자열로', async () => {

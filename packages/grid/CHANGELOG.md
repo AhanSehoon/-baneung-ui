@@ -1,5 +1,29 @@
 # @baneung-pack/grid
 
+## 0.8.0
+
+### Minor Changes
+
+- CSV 다운로드 기능 추가 (`GridHandle.exportCsv`).
+
+  # Imperative API
+  - `exportCsv(filename?: string, options?: { rows?: TRow[] }): void`
+    - 기본 파일명 `'grid.csv'`
+    - `options.rows`로 명시한 행만 export 가능 (예: `getChangedData()` / 외부 필터링 결과)
+    - 미지정 시 `getSavedData()` (편집 반영, 삭제 제외) 사용
+
+  # CSV 포맷
+  - 헤더: `column.header`가 string이면 그 값, 아니면 `column.id`
+  - 데이터: accessor가 반환한 raw 값 (renderer 시각 출력 X — 사용자가 원하는 것은 보통 원본 데이터)
+  - 셀 escape: `,` / `"` / `\n` / `\r` 포함 시 `"..."`로 감싸고 내부 `"`는 두 번
+  - 줄 구분자: CRLF (Excel/Windows 호환)
+  - UTF-8 BOM 포함 → Excel에서 한글 깨짐 없이 열림
+
+  # 기타
+  - 새 helper `src/components/grid/csv.ts` (`buildCsv`, `downloadCsv`)
+  - SSR 안전 가드 (document/URL 미존재 시 no-op)
+  - 37 tests (CSV export 1개 신규 — URL.createObjectURL + anchor click spy)
+
 ## 0.7.0
 
 ### Minor Changes

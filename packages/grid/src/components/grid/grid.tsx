@@ -1,6 +1,7 @@
 import { useVirtualizer, type Virtualizer } from '@tanstack/react-virtual';
 import * as React from 'react';
 
+import { buildCsv, downloadCsv } from './csv';
 import { EditableCell } from './editable-cell';
 import { FilterPopover } from './filter-popover';
 import { GridPagination } from './pagination';
@@ -317,6 +318,16 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
     });
   }, [cellSelection, selectedCells, activeCell, columns, state]);
 
+  // CSV export — `options.rows` 명시 시 그 행만, 아니면 saved data (편집 반영, 삭제 제외).
+  const exportCsv = React.useCallback(
+    (filename = 'grid.csv', options?: { rows?: TRow[] }) => {
+      const targetRows = options?.rows ?? state.getSavedData();
+      const csv = buildCsv(columns, targetRows);
+      downloadCsv(csv, filename);
+    },
+    [state, columns],
+  );
+
   // 8. imperative API
   React.useImperativeHandle(
     ref,
@@ -331,8 +342,9 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
       addRow,
       removeSelectedRows,
       clearSelectedCells,
+      exportCsv,
     }),
-    [state, addRow, removeSelectedRows, clearSelectedCells],
+    [state, addRow, removeSelectedRows, clearSelectedCells, exportCsv],
   );
 
   // 9. multi-cell drag — mousedown으로 시작, mousemove로 사각형 갱신, mouseup으로 종료.

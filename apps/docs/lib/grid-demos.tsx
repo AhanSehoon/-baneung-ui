@@ -595,6 +595,49 @@ const editableTaskColumns: GridColumn<TaskRow>[] = [
   },
 ];
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Demo: CSV 다운로드
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function CsvExportDemo() {
+  const gridRef = React.useRef<GridHandle<Product>>(null);
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-center gap-2 border border-border-default bg-surface px-3 py-2">
+        <Muted className="text-xs">행 편집 후 다운로드:</Muted>
+        <div className="grow" />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => gridRef.current?.exportCsv('products.csv')}
+        >
+          전체 CSV 다운로드
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            const changed = gridRef.current?.getChangedData() ?? [];
+            gridRef.current?.exportCsv('products-changed.csv', { rows: changed });
+          }}
+        >
+          변경분만 CSV 다운로드
+        </Button>
+        <Button variant="ghost" size="sm" onClick={() => gridRef.current?.reset()}>
+          되돌리기
+        </Button>
+      </div>
+      <Grid
+        ref={gridRef}
+        columns={editableColumns}
+        data={sampleProducts}
+        selectable
+        getRowId={(row) => row.id}
+      />
+    </div>
+  );
+}
+
 export function RowOperationsDemo() {
   const gridRef = React.useRef<GridHandle<TaskRow>>(null);
   const nextIdRef = React.useRef(initialTasks.length + 1);

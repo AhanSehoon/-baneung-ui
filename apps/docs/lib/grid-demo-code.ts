@@ -255,6 +255,47 @@ export function EditorTypesDemo() {
   return <Grid columns={columns} data={tasks} getRowId={(r) => r.id} />;
 }`;
 
+export const csvExportCode = `import { Grid, type GridColumn, type GridHandle } from '@baneung-pack/grid';
+import { Button } from '@baneung-pack/ui';
+
+export function CsvExportDemo() {
+  const gridRef = React.useRef<GridHandle<Product>>(null);
+
+  return (
+    <>
+      {/* 전체 데이터 CSV로 다운로드 */}
+      <Button onClick={() => gridRef.current?.exportCsv('products.csv')}>
+        전체 CSV 다운로드
+      </Button>
+
+      {/* 변경된 행만 CSV로 다운로드 */}
+      <Button
+        onClick={() => {
+          const changed = gridRef.current?.getChangedData() ?? [];
+          gridRef.current?.exportCsv('changed.csv', { rows: changed });
+        }}
+      >
+        변경분만 다운로드
+      </Button>
+
+      <Grid
+        ref={gridRef}
+        columns={editableColumns}
+        data={data}
+        selectable
+        getRowId={(row) => row.id}
+      />
+    </>
+  );
+}
+
+// exportCsv는 GridHandle.exportCsv(filename, options?) 시그니처:
+// - filename: 다운로드 파일명 (기본 'grid.csv')
+// - options.rows: 명시한 행만 export. 미지정 시 getSavedData() 사용 (편집 반영, 삭제 제외)
+// 헤더: column.header가 string이면 그 값, 아니면 column.id
+// 데이터: accessor가 반환한 raw 값 (renderer 시각 출력 X)
+// 인코딩: UTF-8 + BOM → Excel에서 한글 깨짐 없이 열림`;
+
 export const rowOperationsCode = `import { Grid, type GridColumn, type GridHandle } from '@baneung-pack/grid';
 import { Button } from '@baneung-pack/ui';
 

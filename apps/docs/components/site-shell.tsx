@@ -45,6 +45,7 @@ const navSections: { label: string; items: NavItem[] }[] = [
           { href: '/grid/tree', label: 'Tree (계층) 모드' },
           { href: '/grid/editors-sort-filter', label: '빌트인 에디터 · 정렬 · 필터' },
           { href: '/grid/row-operations', label: '행 추가 · 삭제 · 다중 셀 선택' },
+          { href: '/grid/csv-export', label: 'CSV 다운로드' },
         ],
       },
     ],

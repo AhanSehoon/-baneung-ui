@@ -76,6 +76,11 @@ const handleMethods: [method: string, ret: string, desc: string][] = [
   ['addRow(row, position)', 'void', "행 추가: 'first' | 'last' | 'above-active' | 'below-active'"],
   ['removeSelectedRows()', 'void', '셀 선택(active 또는 multi)된 행을 모두 삭제 bucket으로'],
   ['clearSelectedCells()', 'void', '셀 선택된 셀의 값을 빈 문자열로 (string key accessor만)'],
+  [
+    'exportCsv(filename?, options?)',
+    'void',
+    'CSV 다운로드. UTF-8 BOM + Excel 호환. options.rows로 특정 행만 export 가능',
+  ],
 ];
 
 function PropsTable({ rows }: { rows: Row[] }) {

@@ -206,4 +206,16 @@ export interface GridHandle<TRow = Record<string, unknown>> {
    * accessor가 string key인 컬럼만 적용. 함수 accessor 컬럼은 무시.
    */
   clearSelectedCells(): void;
+  /**
+   * 현재 그리드 데이터를 CSV로 다운로드.
+   *
+   * - 헤더 행은 `column.header` (문자열인 경우) 또는 `column.id`.
+   * - 데이터 행은 accessor가 반환한 raw 값 (renderer 시각 출력 X).
+   * - UTF-8 BOM 포함 → Excel에서 한글 깨짐 없이 열림.
+   * - 기본 파일명은 `'grid.csv'`.
+   *
+   * 옵션:
+   * - `rows`: 명시한 행만 export. 미지정 시 `getSavedData()` 사용 (편집 반영, 삭제 제외).
+   */
+  exportCsv(filename?: string, options?: { rows?: TRow[] }): void;
 }
