@@ -1,6 +1,6 @@
 {
   "name": "@baneung-pack/grid",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "private": false,
   "description": "바능 디자인 시스템 데이터 그리드 — virtualization 토글 + 내장 페이지네이션 (MVP)",
   "type": "module",

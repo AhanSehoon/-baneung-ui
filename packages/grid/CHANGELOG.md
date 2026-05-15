@@ -1,5 +1,19 @@
 # @baneung-pack/grid
 
+## 0.4.1
+
+### Patch Changes
+
+- 진행률 바 fill 색이 표시되지 않던 문제 수정.
+
+  원인: grid의 globals.css `@theme inline`에 status 컬러
+  (`--color-success`/`--color-danger`/`--color-warning`/`--color-info`)와
+  `--color-foreground-subtle` 매핑이 빠져 있어 `bg-success` Tailwind 유틸리티가
+  색을 못 받음 → fill 바가 투명해서 모든 행이 100% 차 있는 것처럼 보였음.
+
+  @theme inline에 누락 토큰 추가. 이제 `renderer: 'progress'`가 `value/max`
+  비율만큼만 녹색 fill을 그린다.
+
 ## 0.4.0
 
 ### Minor Changes

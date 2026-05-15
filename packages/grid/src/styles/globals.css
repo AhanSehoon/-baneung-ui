@@ -24,6 +24,7 @@
   /* 텍스트 */
   --color-foreground: var(--color-text-primary);
   --color-foreground-muted: var(--color-text-secondary);
+  --color-foreground-subtle: var(--color-text-tertiary);
   --color-foreground-inverse: var(--color-text-inverse);
 
   /* 보더 */
@@ -32,6 +33,12 @@
 
   /* 포커스 링 */
   --color-ring: var(--color-focus-ring);
+
+  /* 상태 — 진행률 바의 bg-success 등 */
+  --color-success: var(--color-status-success);
+  --color-warning: var(--color-status-warning);
+  --color-danger: var(--color-status-danger);
+  --color-info: var(--color-status-info);
 
   /* 폰트 */
   --font-sans: var(--typography-font-family-sans);
