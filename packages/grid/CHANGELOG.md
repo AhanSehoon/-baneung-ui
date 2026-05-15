@@ -1,5 +1,29 @@
 # @baneung-pack/grid
 
+## 0.8.2
+
+### Patch Changes
+
+- `'use client'` 주입을 React/Radix import가 있는 파일에만 선택적으로 적용 (1.0.5 / 0.8.1 회귀 수정).
+
+  # 문제
+
+  1.0.5 / 0.8.1에서 dist의 모든 .js/.cjs 파일에 무차별로 `'use client'`를 주입했더니
+  `cn` 같은 순수 유틸리티까지 client-only가 되어 Next.js 서버 컴포넌트에서 호출 불가:
+
+  ```
+  Error: Attempted to call cn() from the server but cn is on the client.
+  ```
+
+  # 수정
+
+  `react` / `react-dom` / `react/jsx-runtime` / `@radix-ui/*` / `@tanstack/react-*` /
+  `sonner` / `lucide-react` / `cmdk` / `vaul` 중 하나라도 import하는 파일에만
+  `'use client'`를 주입.
+  - 컴포넌트 chunk (Radix 기반, hook 사용) → 주입 ✅
+  - 유틸리티 chunk (cn, 순수 함수) → 미주입 ✅
+  - 서버 컴포넌트에서 `cn`, 타입 export 등 직접 호출 가능
+
 ## 0.8.1
 
 ### Patch Changes

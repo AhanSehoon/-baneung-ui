@@ -14,6 +14,12 @@ import { defineConfig } from 'tsup';
  */
 const USE_CLIENT_BANNER = "'use client';\n";
 
+/**
+ * React/Radix 등 client 런타임 import가 있는 파일에만 'use client' 주입.
+ * 순수 유틸리티(csv 빌더 등)는 server에서도 호출 가능하게 둔다.
+ */
+const CLIENT_IMPORT_REGEX = /from\s+["'](react(\/|$|-dom)|@radix-ui\/|@tanstack\/react-)/;
+
 async function injectUseClient(distDir: string) {
   async function walk(dir: string): Promise<string[]> {
     const entries = await fs.readdir(dir, { withFileTypes: true });
@@ -32,6 +38,7 @@ async function injectUseClient(distDir: string) {
     files.map(async (file) => {
       const content = await fs.readFile(file, 'utf8');
       if (content.startsWith("'use client'") || content.startsWith('"use client"')) return;
+      if (!CLIENT_IMPORT_REGEX.test(content)) return;
       await fs.writeFile(file, USE_CLIENT_BANNER + content, 'utf8');
     }),
   );

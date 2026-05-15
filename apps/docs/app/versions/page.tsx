@@ -33,17 +33,28 @@ interface PackageHistory {
 
 const uiHistory: PackageHistory = {
   pkg: '@baneung-pack/ui',
-  current: '1.0.5',
+  current: '1.0.6',
   npmUrl: 'https://www.npmjs.com/package/@baneung-pack/ui',
   entries: [
     {
+      version: '1.0.6',
+      type: 'patch',
+      summary: "'use client' 주입을 React/Radix 사용 파일에만 선택적으로 적용 (1.0.5 회귀 수정)",
+      details: [
+        "1.0.5에서 cn 같은 순수 유틸리티까지 client-only가 되어 'Attempted to call cn() from the server' 에러 발생",
+        'react / react-dom / @radix-ui / @tanstack/react-* / sonner / lucide-react / cmdk / vaul import가 있는 파일에만 주입',
+        '서버 컴포넌트에서 cn, 타입 등 직접 호출 가능',
+      ],
+    },
+    {
       version: '1.0.5',
       type: 'patch',
-      summary: "Next.js App Router (RSC) 호환 — 빌드 출력물에 'use client' 디렉티브 주입",
+      summary:
+        "Next.js App Router (RSC) 호환 — 빌드 출력물에 'use client' 디렉티브 주입 (1.0.6에서 회귀 수정)",
       details: [
         '대부분 컴포넌트가 Radix UI 기반(내부 hook) 또는 자체 hook 사용 → 서버 컴포넌트에서 직접 import 시 런타임 오류 발생하던 문제 해결',
         'tsup onSuccess에서 dist 출력물 모든 .js / .cjs 파일 최상단에 자동 주입',
-        'ESM/CJS + 코드 스플리팅 chunk 파일 전부 적용',
+        '단, 무차별 주입으로 cn 유틸리티가 깨지는 문제가 있어 1.0.6에서 선택적 주입으로 보강',
       ],
     },
     {
@@ -137,16 +148,27 @@ const tokensHistory: PackageHistory = {
 
 const gridHistory: PackageHistory = {
   pkg: '@baneung-pack/grid',
-  current: '0.8.1',
+  current: '0.8.2',
   npmUrl: 'https://www.npmjs.com/package/@baneung-pack/grid',
   entries: [
     {
+      version: '0.8.2',
+      type: 'patch',
+      summary: "'use client' 주입을 React/Radix 사용 파일에만 선택적으로 적용 (0.8.1 회귀 수정)",
+      details: [
+        '0.8.1의 무차별 주입으로 순수 유틸리티(csv 빌더 등)까지 client-only가 되던 문제 수정',
+        'react / @radix-ui / @tanstack/react-* import가 있는 파일에만 주입',
+      ],
+    },
+    {
       version: '0.8.1',
       type: 'patch',
-      summary: "Next.js App Router (RSC) 호환 — 빌드 출력물에 'use client' 디렉티브 주입",
+      summary:
+        "Next.js App Router (RSC) 호환 — 빌드 출력물에 'use client' 디렉티브 주입 (0.8.2에서 회귀 수정)",
       details: [
         '가상화/state/ref 전반 사용 → RSC 환경에서 client 필수',
         'tsup onSuccess에서 dist 출력물 모든 .js / .cjs 파일 최상단에 자동 주입',
+        '무차별 주입으로 순수 유틸리티가 깨지는 문제는 0.8.2에서 선택적 주입으로 수정',
       ],
     },
     {

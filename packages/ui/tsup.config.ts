@@ -16,7 +16,20 @@ import { defineConfig } from 'tsup';
  */
 const USE_CLIENT_BANNER = "'use client';\n";
 
-/** dist 안의 모든 .js / .cjs 파일에 'use client' 디렉티브를 최상단에 삽입 */
+/**
+ * dist 안의 .js / .cjs 파일 중 React/Radix를 사용하는 파일에만
+ * 'use client' 디렉티브를 최상단에 삽입.
+ *
+ * 모든 파일에 무차별로 주입하면 `cn` 같은 순수 유틸리티까지 client-only가 되어
+ * 서버 컴포넌트에서 호출할 수 없게 되는 문제가 생긴다.
+ * (Next.js: "Attempted to call cn() from the server but cn is on the client")
+ *
+ * 휴리스틱: react / react-dom / react/jsx-runtime / @radix-ui / sonner / lucide 등
+ * UI 런타임 import가 있는 파일만 client 컴포넌트 코드로 간주.
+ */
+const CLIENT_IMPORT_REGEX =
+  /from\s+["'](react(\/|$|-dom)|@radix-ui\/|sonner|lucide-react|cmdk|vaul|@tanstack\/react-)/;
+
 async function injectUseClient(distDir: string) {
   async function walk(dir: string): Promise<string[]> {
     const entries = await fs.readdir(dir, { withFileTypes: true });
@@ -35,6 +48,7 @@ async function injectUseClient(distDir: string) {
     files.map(async (file) => {
       const content = await fs.readFile(file, 'utf8');
       if (content.startsWith("'use client'") || content.startsWith('"use client"')) return;
+      if (!CLIENT_IMPORT_REGEX.test(content)) return;
       // CJS는 'use strict'가 자동 삽입됨 → 그 앞에 추가
       await fs.writeFile(file, USE_CLIENT_BANNER + content, 'utf8');
     }),

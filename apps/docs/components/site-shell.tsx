@@ -136,7 +136,7 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
             @baneung-pack/ui
           </Heading>
           <Badge variant="secondary" className="text-[10px]">
-            v1.0.5
+            v1.0.6
           </Badge>
         </div>
         <nav className="flex-1 overflow-y-auto p-3">
