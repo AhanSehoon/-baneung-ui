@@ -162,12 +162,17 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
                             className="flex w-full items-center justify-between"
                           >
                             <span>{item.label}</span>
-                            <span
+                            <svg
                               aria-hidden="true"
-                              className="text-xs leading-none text-foreground-subtle"
+                              viewBox="0 0 16 16"
+                              className={cn(
+                                'h-4 w-4 shrink-0 text-foreground-muted transition-transform duration-fast ease-standard',
+                                isExpanded && 'rotate-90',
+                              )}
+                              fill="currentColor"
                             >
-                              {isExpanded ? '▾' : '▸'}
-                            </span>
+                              <path d="M6 4l4 4-4 4V4z" />
+                            </svg>
                           </button>
                         </Item>
                       )}
