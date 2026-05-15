@@ -4,11 +4,12 @@ import * as React from 'react';
 import { EditableCell } from './editable-cell';
 import { GridPagination } from './pagination';
 import { SelectionCheckbox } from './selection-checkbox';
+import { applySortAndFilter, nextSortState } from './sort-filter';
 import { collectExpandableIds, flattenTree, type FlatRow } from './tree-utils';
 import { useGridState } from './use-grid-state';
 import { cn } from '../../lib/cn';
 
-import type { GridColumn, GridHandle, GridProps } from './types';
+import type { GridColumn, GridHandle, GridProps, GridSortState } from './types';
 
 type RowId = string | number;
 
@@ -185,19 +186,32 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
     [onPageChange],
   );
 
-  // 3. 화면에 보일 행 — 트리 모드면 flattenTree, 아니면 state.rows를 FlatRow로 wrap
+  // 1d. sort / filter 상태
+  const [sortState, setSortState] = React.useState<GridSortState | null>(null);
+  const [filters, setFilters] = React.useState<Record<string, string>>({});
+  const toggleSort = React.useCallback((columnId: string) => {
+    setSortState((prev) => nextSortState(prev, columnId));
+  }, []);
+  const setFilter = React.useCallback((columnId: string, value: string) => {
+    setFilters((prev) => ({ ...prev, [columnId]: value }));
+  }, []);
+  const hasFilterableColumn = columns.some((c) => c.filterable);
+
+  // 3. 화면에 보일 행 — 트리 모드면 flattenTree, 아니면 state.rows를 FlatRow로 wrap.
+  //    그 후 filter + sort를 적용 (트리 모드는 sort skip — hierarchy 보존).
   const allFlatRows = React.useMemo<FlatRow<TRow>[]>(() => {
-    if (tree && getChildren) {
-      return flattenTree(data, getChildren, expandedIds, resolveRowId);
-    }
-    return state.rows.map((row, idx) => ({
-      row,
-      id: resolveRowId(row, idx),
-      level: 0,
-      hasChildren: false,
-      expanded: false,
-    }));
-  }, [tree, getChildren, data, expandedIds, state.rows, resolveRowId]);
+    const base: FlatRow<TRow>[] =
+      tree && getChildren
+        ? flattenTree(data, getChildren, expandedIds, resolveRowId)
+        : state.rows.map((row, idx) => ({
+            row,
+            id: resolveRowId(row, idx),
+            level: 0,
+            hasChildren: false,
+            expanded: false,
+          }));
+    return applySortAndFilter(base, columns, filters, sortState, tree);
+  }, [tree, getChildren, data, expandedIds, state.rows, resolveRowId, columns, filters, sortState]);
 
   // 4. 페이지네이션 적용
   const pageCount = pageSize > 0 ? Math.max(1, Math.ceil(allFlatRows.length / pageSize)) : 1;
@@ -280,22 +294,78 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
                   />
                 </th>
               )}
-              {columns.map((col) => (
-                <th
-                  key={col.id}
-                  scope="col"
-                  className={cn(
-                    'border-b border-border-default px-3 py-2 font-medium text-foreground',
-                    col.align === 'right' && 'text-right',
-                    col.align === 'center' && 'text-center',
-                    (!col.align || col.align === 'left') && 'text-left',
-                  )}
-                  style={{ width: col.width }}
-                >
-                  {col.header}
-                </th>
-              ))}
+              {columns.map((col) => {
+                const isSorted = sortState?.columnId === col.id;
+                const sortIcon = !col.sortable
+                  ? null
+                  : !isSorted
+                    ? '↕'
+                    : sortState!.direction === 'asc'
+                      ? '▲'
+                      : '▼';
+                return (
+                  <th
+                    key={col.id}
+                    scope="col"
+                    aria-sort={
+                      !isSorted
+                        ? 'none'
+                        : sortState!.direction === 'asc'
+                          ? 'ascending'
+                          : 'descending'
+                    }
+                    className={cn(
+                      'border-b border-border-default px-3 py-2 font-medium text-foreground',
+                      col.sortable && 'cursor-pointer select-none hover:bg-surface-strong',
+                      col.align === 'right' && 'text-right',
+                      col.align === 'center' && 'text-center',
+                      (!col.align || col.align === 'left') && 'text-left',
+                    )}
+                    style={{ width: col.width }}
+                    onClick={col.sortable ? () => toggleSort(col.id) : undefined}
+                  >
+                    <span className="inline-flex items-center gap-1">
+                      {col.header}
+                      {sortIcon && (
+                        <span
+                          aria-hidden="true"
+                          className={cn(
+                            'text-xs leading-none',
+                            isSorted ? 'text-foreground' : 'text-foreground-subtle',
+                          )}
+                        >
+                          {sortIcon}
+                        </span>
+                      )}
+                    </span>
+                  </th>
+                );
+              })}
             </tr>
+            {hasFilterableColumn && (
+              <tr>
+                {selectable && (
+                  <th
+                    aria-hidden="true"
+                    className="w-10 border-b border-border-default bg-canvas px-3 py-1"
+                  />
+                )}
+                {columns.map((col) => (
+                  <th key={col.id} className="border-b border-border-default bg-canvas px-2 py-1">
+                    {col.filterable && (
+                      <input
+                        type="text"
+                        value={filters[col.id] ?? ''}
+                        onChange={(e) => setFilter(col.id, e.target.value)}
+                        placeholder="필터..."
+                        aria-label={`${typeof col.header === 'string' ? col.header : col.id} 필터`}
+                        className="w-full border border-border-default bg-canvas px-2 py-1 text-xs text-foreground placeholder:text-foreground-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                      />
+                    )}
+                  </th>
+                ))}
+              </tr>
+            )}
           </thead>
           {isEmpty ? (
             <tbody>

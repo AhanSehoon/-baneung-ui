@@ -20,6 +20,7 @@
   /* 배경 */
   --color-canvas: var(--color-bg-canvas);
   --color-surface: var(--color-bg-surface);
+  --color-surface-strong: var(--color-bg-surface-strong);
 
   /* 텍스트 */
   --color-foreground: var(--color-text-primary);

@@ -52,6 +52,23 @@ export interface GridColumn<TRow = Record<string, unknown>> {
    * 기본 'YYYY-MM-DD'.
    */
   dateFormat?: string;
+  /**
+   * 헤더 클릭으로 정렬 활성. 3-state 토글 (없음 → asc → desc → 없음).
+   * 정렬은 accessor 값으로 수행. 트리 모드(`tree=true`)에서는 부모-자식 구조가
+   * 깨지므로 무시된다.
+   */
+  sortable?: boolean;
+  /**
+   * 헤더 아래 두 번째 행에 필터 input 표시. 입력 문자열을 컬럼 값(String 변환)
+   * 의 부분 일치(case-insensitive)로 필터링.
+   */
+  filterable?: boolean;
+}
+
+/** Sort 상태 — 한 번에 한 컬럼만 (multi-column sort는 후속 버전). */
+export interface GridSortState {
+  columnId: string;
+  direction: 'asc' | 'desc';
 }
 
 /**

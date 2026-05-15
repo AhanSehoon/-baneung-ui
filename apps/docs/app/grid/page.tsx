@@ -451,7 +451,7 @@ const tasks: Task[] = [
 ];
 
 const taskColumns: GridColumn<Task>[] = [
-  { id: 'id', header: 'ID', accessor: 'id', width: 60, align: 'right' },
+  { id: 'id', header: 'ID', accessor: 'id', width: 60, align: 'right', sortable: true },
   {
     id: 'charge',
     header: 'Charge',
@@ -459,6 +459,8 @@ const taskColumns: GridColumn<Task>[] = [
     editable: true,
     editor: 'dropdown',
     options: chargeOptions,
+    sortable: true,
+    filterable: true,
   },
   {
     id: 'complete',
@@ -470,6 +472,7 @@ const taskColumns: GridColumn<Task>[] = [
     editable: true,
     editor: 'number',
     width: 140,
+    sortable: true,
   },
   {
     id: 'startDate',
@@ -480,6 +483,7 @@ const taskColumns: GridColumn<Task>[] = [
     editable: true,
     editor: 'date',
     width: 130,
+    sortable: true,
   },
   {
     id: 'endDate',
@@ -490,6 +494,7 @@ const taskColumns: GridColumn<Task>[] = [
     editable: true,
     editor: 'date',
     width: 130,
+    sortable: true,
   },
 ];
 
@@ -658,17 +663,16 @@ export default function GridPage() {
         <TreeDemo />
       </section>
 
-      {/* Demo 8: 빌트인 에디터 */}
+      {/* Demo 8: 빌트인 에디터 + 정렬·필터 */}
       <section className="flex flex-col gap-4">
         <div>
           <Heading level={2} className="text-2xl">
-            빌트인 에디터 — Dropdown · Date · Number + Progress
+            빌트인 에디터 · 정렬 · 필터
           </Heading>
           <Muted className="text-sm">
-            셀 더블클릭으로 편집기 진입. <code>editor: &apos;dropdown&apos;</code> +{' '}
-            <code>options</code>로 선택지 / <code>editor: &apos;date&apos;</code>로 네이티브 달력
-            popup / <code>editor: &apos;number&apos;</code> +{' '}
-            <code>renderer: &apos;progress&apos;</code>로 숫자 편집 + 진행률 바 시각화.
+            셀 더블클릭으로 편집기(dropdown / date / number) 진입. 헤더 클릭으로 정렬 (↕ → ▲ asc → ▼
+            desc → 해제, 3-state). Charge 컬럼에는 필터 input — 부분 일치 (대소문자 무시).{' '}
+            <code>sortable</code> / <code>filterable</code> 컬럼 prop으로 활성.
           </Muted>
         </div>
         <EditorTypesDemo />

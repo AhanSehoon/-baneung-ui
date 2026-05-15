@@ -1,5 +1,30 @@
 # @baneung-pack/grid
 
+## 0.5.0
+
+### Minor Changes
+
+- 헤더 정렬(sort) + 필터(filter) 추가.
+
+  # Props (column-level)
+  - `sortable: boolean` — 헤더 클릭으로 3-state 정렬 (↕ → ▲ asc → ▼ desc → 해제).
+    값 비교는 null 후순위, Date timestamp, number 산술, 그 외 localeCompare(numeric).
+  - `filterable: boolean` — 헤더 아래 두 번째 행에 필터 input. 부분 일치
+    (case-insensitive), 컬럼별 독립 적용.
+
+  # 동작
+  - 여러 필터는 AND로 결합. sort는 1컬럼만.
+  - 페이지네이션은 sort/filter 후의 행 수 기준.
+  - 트리 모드: sort skip (parent-child 보존), filter는 동작하지만 부모가 사라져도
+    자식은 계속 표시됨 (의도된 한계).
+  - aria-sort 헤더 속성으로 스크린리더 안내.
+
+  # 추가
+  - 새 `GridSortState` 타입 export
+  - `sort-filter.ts` 헬퍼 (applySortAndFilter, nextSortState)
+  - @theme inline에 `--color-surface-strong` 매핑 추가 (sortable hover 색)
+  - 29 tests (sort/filter 3개 신규)
+
 ## 0.4.1
 
 ### Patch Changes

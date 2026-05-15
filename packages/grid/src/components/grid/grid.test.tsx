@@ -296,6 +296,80 @@ describe('Grid', () => {
   });
 
   // ───────────────────────────────────────────────────────────────────────────
+  // sort / filter
+  // ───────────────────────────────────────────────────────────────────────────
+
+  it('sortable: 헤더 클릭으로 asc → desc → none 3-state', async () => {
+    const user = userEvent.setup();
+    const cols: GridColumn<Row>[] = [
+      { id: 'price', header: '가격', accessor: 'price', sortable: true },
+    ];
+    const { container } = render(<Grid columns={cols} data={sampleData} getRowId={(r) => r.id} />);
+
+    const header = screen.getByRole('columnheader', { name: /가격/ });
+    // 1차 클릭 — asc (price 작은순)
+    await user.click(header);
+    expect(header).toHaveAttribute('aria-sort', 'ascending');
+    let cells = container.querySelectorAll('tbody td');
+    expect(cells[0]?.textContent).toBe('1000');
+
+    // 2차 클릭 — desc (price 큰순)
+    await user.click(header);
+    expect(header).toHaveAttribute('aria-sort', 'descending');
+    cells = container.querySelectorAll('tbody td');
+    expect(cells[0]?.textContent).toBe('3000');
+
+    // 3차 클릭 — 정렬 해제 (원래 순서)
+    await user.click(header);
+    expect(header).toHaveAttribute('aria-sort', 'none');
+    cells = container.querySelectorAll('tbody td');
+    expect(cells[0]?.textContent).toBe('1000');
+  });
+
+  it('filterable: 필터 input에 텍스트 입력하면 행이 좁혀짐', async () => {
+    const user = userEvent.setup();
+    const cols: GridColumn<Row>[] = [
+      { id: 'name', header: '이름', accessor: 'name', filterable: true },
+    ];
+    render(<Grid columns={cols} data={sampleData} getRowId={(r) => r.id} />);
+
+    const filterInput = screen.getByRole('textbox', { name: '이름 필터' });
+    await user.type(filterInput, '바나');
+
+    expect(screen.getByText('바나나')).toBeInTheDocument();
+    expect(screen.queryByText('사과')).not.toBeInTheDocument();
+    expect(screen.queryByText('체리')).not.toBeInTheDocument();
+  });
+
+  it('sort + filter 동시 적용', async () => {
+    const user = userEvent.setup();
+    const cols: GridColumn<Row>[] = [
+      { id: 'name', header: '이름', accessor: 'name', filterable: true },
+      { id: 'price', header: '가격', accessor: 'price', sortable: true },
+    ];
+    const moreData: Row[] = [
+      { id: 1, name: '사과주스', price: 5000 },
+      { id: 2, name: '사과파이', price: 3000 },
+      { id: 3, name: '사과잼', price: 4000 },
+      { id: 4, name: '바나나', price: 2000 },
+    ];
+    const { container } = render(<Grid columns={cols} data={moreData} getRowId={(r) => r.id} />);
+
+    // 필터: '사과'
+    await user.type(screen.getByRole('textbox', { name: '이름 필터' }), '사과');
+    // 정렬: 가격 desc (2번 클릭)
+    const priceHeader = screen.getByRole('columnheader', { name: /가격/ });
+    await user.click(priceHeader);
+    await user.click(priceHeader);
+
+    // 사과주스(5000) > 사과잼(4000) > 사과파이(3000)
+    const rows = container.querySelectorAll('tbody tr');
+    expect(rows.length).toBe(3);
+    expect(rows[0]?.textContent).toContain('사과주스');
+    expect(rows[2]?.textContent).toContain('사과파이');
+  });
+
+  // ───────────────────────────────────────────────────────────────────────────
   // tree (계층) 모드
   // ───────────────────────────────────────────────────────────────────────────
 
