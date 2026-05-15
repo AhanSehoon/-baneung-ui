@@ -1,6 +1,6 @@
 import { Heading, Lead, Separator } from '@baneung-pack/ui';
 
-import { CodeViewer } from '@/components/code-viewer';
+import { ExampleSection } from '@/components/example-section';
 import { basicCode } from '@/lib/grid-demo-code';
 import { BasicDemo } from '@/lib/grid-demos';
 
@@ -12,8 +12,7 @@ export default function Page() {
         <Lead>컬럼 정의와 데이터만 전달해서 그리드를 그립니다. 좌/중/우 align 지원.</Lead>
       </header>
       <Separator />
-      <BasicDemo />
-      <CodeViewer code={basicCode} />
+      <ExampleSection Example={BasicDemo} code={basicCode} />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { Heading, Lead, Separator } from '@baneung-pack/ui';
 
-import { CodeViewer } from '@/components/code-viewer';
+import { ExampleSection } from '@/components/example-section';
 import { editorsSortFilterCode } from '@/lib/grid-demo-code';
 import { EditorTypesDemo } from '@/lib/grid-demos';
 
@@ -16,8 +16,7 @@ export default function Page() {
         </Lead>
       </header>
       <Separator />
-      <EditorTypesDemo />
-      <CodeViewer code={editorsSortFilterCode} />
+      <ExampleSection Example={EditorTypesDemo} code={editorsSortFilterCode} />
     </div>
   );
 }

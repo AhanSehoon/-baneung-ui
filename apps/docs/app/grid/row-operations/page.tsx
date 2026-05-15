@@ -1,6 +1,6 @@
 import { Heading, Lead, Separator } from '@baneung-pack/ui';
 
-import { CodeViewer } from '@/components/code-viewer';
+import { ExampleSection } from '@/components/example-section';
 import { rowOperationsCode } from '@/lib/grid-demo-code';
 import { RowOperationsDemo } from '@/lib/grid-demos';
 
@@ -16,8 +16,7 @@ export default function Page() {
         </Lead>
       </header>
       <Separator />
-      <RowOperationsDemo />
-      <CodeViewer code={rowOperationsCode} />
+      <ExampleSection Example={RowOperationsDemo} code={rowOperationsCode} />
     </div>
   );
 }

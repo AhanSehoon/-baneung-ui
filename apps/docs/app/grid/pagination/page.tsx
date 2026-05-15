@@ -1,6 +1,6 @@
 import { Heading, Lead, Separator } from '@baneung-pack/ui';
 
-import { CodeViewer } from '@/components/code-viewer';
+import { ExampleSection } from '@/components/example-section';
 import { paginationCode } from '@/lib/grid-demo-code';
 import { PaginationDemo } from '@/lib/grid-demos';
 
@@ -15,8 +15,7 @@ export default function Page() {
         </Lead>
       </header>
       <Separator />
-      <PaginationDemo />
-      <CodeViewer code={paginationCode} />
+      <ExampleSection Example={PaginationDemo} code={paginationCode} />
     </div>
   );
 }

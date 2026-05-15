@@ -1,6 +1,6 @@
 import { Badge, Heading, Lead, Separator } from '@baneung-pack/ui';
 
-import { CodeViewer } from '@/components/code-viewer';
+import { ExampleSection } from '@/components/example-section';
 import { virtualizedCode } from '@/lib/grid-demo-code';
 import { VirtualizedDemo } from '@/lib/grid-demos';
 
@@ -18,8 +18,7 @@ export default function Page() {
         <Badge variant="outline">5,000 rows</Badge>
       </header>
       <Separator />
-      <VirtualizedDemo />
-      <CodeViewer code={virtualizedCode} />
+      <ExampleSection Example={VirtualizedDemo} code={virtualizedCode} />
     </div>
   );
 }
