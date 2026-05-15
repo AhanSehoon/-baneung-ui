@@ -116,6 +116,21 @@ export interface GridProps<TRow = Record<string, unknown>> extends Omit<
    */
   onRowChange?: (row: TRow, id: string | number) => void;
   /**
+   * 셀 선택 모드.
+   * - `'none'`: 비활성 (셀 클릭/드래그로 selection 안 됨)
+   * - `'single'` (기본): 클릭으로 한 셀 active. outline 강조.
+   * - `'multi'`: 클릭으로 단일 + 마우스 누른 채 드래그로 사각형 영역 다중 선택.
+   *
+   * `selectable`(체크박스 행 선택)과는 별개의 축이다. 둘 다 활성 가능.
+   */
+  cellSelection?: 'none' | 'single' | 'multi';
+  /**
+   * Delete 키를 누르면 선택된 셀의 값을 빈 문자열로 설정. accessor가 string key인
+   * 컬럼에만 적용. `cellSelection`이 `'none'`이 아닐 때만 의미 있다.
+   * 그리드 컨테이너에 포커스가 있는 동안만 작동 (`tabIndex={0}`).
+   */
+  clearOnDelete?: boolean;
+  /**
    * Tree(계층) 모드. 첫 컬럼에 caret + 들여쓰기를 자동 삽입해 펼침/접힘 가능한
    * 트리뷰로 렌더한다. `getChildren`이 함께 필요.
    *
@@ -170,4 +185,25 @@ export interface GridHandle<TRow = Record<string, unknown>> {
   clearSelection(): void;
   /** 모든 편집/삭제 내역 폐기하고 원본 data prop으로 복원. */
   reset(): void;
+  /**
+   * 새 행을 지정 위치에 추가.
+   * - `'first'`: 최상위 (배열의 맨 앞)
+   * - `'last'`: 최하위 (배열의 맨 끝)
+   * - `'above-active'`: 현재 active 셀의 행 위
+   * - `'below-active'`: 현재 active 셀의 행 아래
+   *
+   * active 셀이 없는 상태에서 `'above-active'` / `'below-active'`를 호출하면
+   * 무시된다 (no-op).
+   */
+  addRow(row: TRow, position: 'first' | 'last' | 'above-active' | 'below-active'): void;
+  /**
+   * 현재 셀 선택(active 셀 또는 multi-select된 셀들)에 포함된 행을 모두 삭제로 이동.
+   * `cellSelection`이 `'none'`이면 no-op.
+   */
+  removeSelectedRows(): void;
+  /**
+   * 현재 선택된 셀들(active 또는 multi)의 값을 빈 문자열로 클리어.
+   * accessor가 string key인 컬럼만 적용. 함수 accessor 컬럼은 무시.
+   */
+  clearSelectedCells(): void;
 }

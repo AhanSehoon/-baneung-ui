@@ -1,5 +1,40 @@
 # @baneung-pack/grid
 
+## 0.7.0
+
+### Minor Changes
+
+- 대규모 기능 추가 — popover Portal · cell-selection · row add/remove · Delete 키.
+
+  # 1. Filter popover Portal 렌더링
+
+  스크롤 컨테이너의 `overflow: auto`에 클리핑되어 popover 일부가 잘리던 문제 수정.
+  `react-dom` portal로 `document.body`에 렌더하고 funnel 버튼의 `clientRect`를 캡처해
+  fixed positioning으로 표시. 화면 우측/하단 넘침 자동 보정.
+
+  # 2. 셀 선택 (cellSelection prop)
+  - `'none'`: 클릭/드래그 비활성
+  - `'single'` (기본): 클릭으로 단일 셀 active (outline)
+  - `'multi'`: 클릭 + 드래그로 사각형 영역 다중 선택. 드래그 중 selected 셀 surface bg.
+
+  # 3. Imperative API (GridHandle)
+  - `addRow(row, position)`: 행 추가
+    - `'first'` / `'last'` / `'above-active'` / `'below-active'`
+    - above/below는 active 셀 기준
+  - `removeSelectedRows()`: 선택된 셀이 속한 행을 모두 삭제로 이동
+  - `clearSelectedCells()`: 선택된 셀의 값을 빈 문자열로 (accessor가 string key만 적용)
+
+  # 4. Delete 키 옵션 (clearOnDelete prop)
+
+  `clearOnDelete={true}` + `cellSelection !== 'none'` 이면 Delete/Backspace 키로
+  선택된 셀 값 일괄 클리어. 그리드 컨테이너에 포커스(tabIndex=0)가 있을 때만 작동.
+  편집 input 안에서는 무시 (텍스트 편집 우선).
+
+  # 기타
+  - 36 tests (addRow / removeSelectedRows / clearSelectedCells / cellSelection='none' 4개 신규)
+  - 새 helper: `state.removeRowsByIds` (use-grid-state)
+  - cellKey 구분자: U+001F (Unit Separator)
+
 ## 0.6.0
 
 ### Minor Changes

@@ -138,11 +138,14 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
     tree = false,
     getChildren,
     defaultExpandedIds = 'none',
+    cellSelection = 'single',
+    clearOnDelete = false,
     className,
     ...props
   }: GridProps<TRow>,
   ref: React.ForwardedRef<GridHandle<TRow>>,
 ) {
+  const containerRef = React.useRef<HTMLDivElement>(null);
   // ID 추출 — getRowId 미지정 시 인덱스. tree 모드에서는 안정적 ID가 필수.
   const resolveRowId = React.useCallback(
     (row: TRow, index: number): RowId => (getRowId ? getRowId(row, index) : index),
@@ -152,14 +155,24 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
   // 1. 내부 상태 (편집·삭제·선택)
   const state = useGridState(data, resolveRowId, onRowChange);
 
-  // 1b. 활성 셀 (클릭한 셀 outline 강조)
+  // 1b. 셀 선택 — single/multi 모두 selectedCells Set으로 통일.
+  //     cellKey = `${rowId}${columnId}` (null byte로 충돌 회피).
+  const cellKey = (rowId: RowId, columnId: string) => `${rowId}${columnId}`;
   const [activeCell, setActiveCell] = React.useState<{
     rowId: RowId;
     columnId: string;
   } | null>(null);
-  const activateCell = React.useCallback((rowId: RowId, columnId: string) => {
-    setActiveCell({ rowId, columnId });
-  }, []);
+  const [selectedCells, setSelectedCells] = React.useState<Set<string>>(new Set());
+  // 드래그 시작 셀 (multi 모드). 드래그 중 mousemove로 currentCell 갱신.
+  const dragStartRef = React.useRef<{ rowId: RowId; columnId: string } | null>(null);
+  const activateCell = React.useCallback(
+    (rowId: RowId, columnId: string) => {
+      if (cellSelection === 'none') return;
+      setActiveCell({ rowId, columnId });
+      setSelectedCells(new Set([cellKey(rowId, columnId)]));
+    },
+    [cellSelection],
+  );
 
   // 1c. Tree 펼침 상태 — defaultExpandedIds로 초기화. data 또는 prop이 바뀌면 재계산.
   const initialExpanded = React.useMemo<Set<RowId>>(() => {
@@ -199,7 +212,11 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
   // 1d. sort / filter 상태 — filter는 컬럼별 "제외" 값 Set.
   const [sortState, setSortState] = React.useState<GridSortState | null>(null);
   const [filters, setFilters] = React.useState<Record<string, Set<string>>>({});
-  const [openFilterColId, setOpenFilterColId] = React.useState<string | null>(null);
+  // 필터 popover anchor — funnel 버튼의 clientRect를 캡처해 Portal로 띄움.
+  const [openFilter, setOpenFilter] = React.useState<{
+    colId: string;
+    anchorRect: { left: number; top: number; bottom: number; right: number };
+  } | null>(null);
   const toggleSort = React.useCallback((columnId: string) => {
     setSortState((prev) => nextSortState(prev, columnId));
   }, []);
@@ -240,7 +257,67 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
     overscan: 8,
   });
 
-  // 6. imperative API
+  // 6. 셀 commit 핸들러 (먼저 정의 — clearSelectedCells에서 사용)
+  const handleCellCommit = React.useCallback(
+    (id: RowId, col: GridColumn<TRow>, value: string) => {
+      if (typeof col.accessor === 'function') return;
+      state.editCell(id, col.accessor as string, value);
+    },
+    [state],
+  );
+
+  // 7. cell-selection 기반 helpers — addRow / removeSelectedRows / clearSelectedCells
+  const addRow = React.useCallback(
+    (newRow: TRow, position: 'first' | 'last' | 'above-active' | 'below-active') => {
+      state.addRow(newRow, position, activeCell?.rowId);
+    },
+    [state, activeCell],
+  );
+  const selectedCellRowIds = React.useCallback((): Set<RowId> => {
+    if (selectedCells.size === 0) {
+      if (activeCell) return new Set([activeCell.rowId]);
+      return new Set();
+    }
+    const ids = new Set<RowId>();
+    selectedCells.forEach((key) => {
+      const sep = key.indexOf('');
+      if (sep < 0) return;
+      const rawId = key.slice(0, sep);
+      // RowId can be number — convert when applicable
+      const asNum = Number(rawId);
+      ids.add(Number.isFinite(asNum) && String(asNum) === rawId ? asNum : rawId);
+    });
+    return ids;
+  }, [selectedCells, activeCell]);
+  const removeSelectedRows = React.useCallback(() => {
+    if (cellSelection === 'none') return;
+    state.removeRowsByIds(selectedCellRowIds());
+    setSelectedCells(new Set());
+    setActiveCell(null);
+  }, [cellSelection, state, selectedCellRowIds]);
+  const clearSelectedCells = React.useCallback(() => {
+    if (cellSelection === 'none') return;
+    const cellsToCheck =
+      selectedCells.size > 0
+        ? Array.from(selectedCells)
+        : activeCell
+          ? [cellKey(activeCell.rowId, activeCell.columnId)]
+          : [];
+    cellsToCheck.forEach((key) => {
+      const sep = key.indexOf('');
+      if (sep < 0) return;
+      const rawId = key.slice(0, sep);
+      const colId = key.slice(sep + 1);
+      const asNum = Number(rawId);
+      const rowId = Number.isFinite(asNum) && String(asNum) === rawId ? asNum : rawId;
+      const col = columns.find((c) => c.id === colId);
+      if (col && typeof col.accessor === 'string') {
+        state.editCell(rowId, col.accessor, '');
+      }
+    });
+  }, [cellSelection, selectedCells, activeCell, columns, state]);
+
+  // 8. imperative API
   React.useImperativeHandle(
     ref,
     () => ({
@@ -251,17 +328,83 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
       deleteSelected: state.deleteSelected,
       clearSelection: state.clearSelection,
       reset: state.reset,
+      addRow,
+      removeSelectedRows,
+      clearSelectedCells,
     }),
-    [state],
+    [state, addRow, removeSelectedRows, clearSelectedCells],
   );
 
-  // 7. 셀 commit 핸들러
-  const handleCellCommit = React.useCallback(
-    (id: RowId, col: GridColumn<TRow>, value: string) => {
-      if (typeof col.accessor === 'function') return;
-      state.editCell(id, col.accessor as string, value);
+  // 9. multi-cell drag — mousedown으로 시작, mousemove로 사각형 갱신, mouseup으로 종료.
+  //    visibleFlatRows / columns의 순서를 기준으로 인덱스 비교 → 사각형 영역 셀 키 수집.
+  const handleCellMouseDown = React.useCallback(
+    (rowId: RowId, columnId: string, e: React.MouseEvent) => {
+      if (cellSelection !== 'multi') return;
+      // 좌측 클릭만
+      if (e.button !== 0) return;
+      dragStartRef.current = { rowId, columnId };
+      setActiveCell({ rowId, columnId });
+      setSelectedCells(new Set([cellKey(rowId, columnId)]));
     },
-    [state],
+    [cellSelection],
+  );
+  const handleCellMouseEnter = React.useCallback(
+    (rowId: RowId, columnId: string) => {
+      if (cellSelection !== 'multi') return;
+      const start = dragStartRef.current;
+      if (!start) return;
+      // 사각형 계산: 행 인덱스 & 컬럼 인덱스 min~max 사이
+      const rowIds = visibleFlatRows.map((fr) => fr.id);
+      const colIds = columns.map((c) => c.id);
+      const r1 = rowIds.indexOf(start.rowId);
+      const r2 = rowIds.indexOf(rowId);
+      const c1 = colIds.indexOf(start.columnId);
+      const c2 = colIds.indexOf(columnId);
+      if (r1 < 0 || r2 < 0 || c1 < 0 || c2 < 0) return;
+      const rLo = Math.min(r1, r2);
+      const rHi = Math.max(r1, r2);
+      const cLo = Math.min(c1, c2);
+      const cHi = Math.max(c1, c2);
+      const next = new Set<string>();
+      for (let r = rLo; r <= rHi; r++) {
+        for (let c = cLo; c <= cHi; c++) {
+          const rid = rowIds[r];
+          const cid = colIds[c];
+          if (rid !== undefined && cid !== undefined) next.add(cellKey(rid, cid));
+        }
+      }
+      setSelectedCells(next);
+    },
+    [cellSelection, visibleFlatRows, columns],
+  );
+  // 전역 mouseup — 드래그 종료
+  React.useEffect(() => {
+    if (cellSelection !== 'multi') return;
+    const onUp = () => {
+      dragStartRef.current = null;
+    };
+    document.addEventListener('mouseup', onUp);
+    return () => document.removeEventListener('mouseup', onUp);
+  }, [cellSelection]);
+
+  // 10. Delete 키 — 옵션 켜진 경우 선택된 셀 값 클리어. 컨테이너 포커스 시에만 작동.
+  const handleContainerKeyDown = React.useCallback(
+    (e: React.KeyboardEvent) => {
+      if (!clearOnDelete) return;
+      if (cellSelection === 'none') return;
+      if (e.key !== 'Delete' && e.key !== 'Backspace') return;
+      // 편집 중인 input 안에서의 Delete는 무시 — 텍스트 편집 우선
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT'
+      )
+        return;
+      e.preventDefault();
+      clearSelectedCells();
+    },
+    [clearOnDelete, cellSelection, clearSelectedCells],
   );
 
   const heightStyle = typeof height === 'number' ? `${height}px` : height;
@@ -276,7 +419,13 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
   const colSpan = columns.length + (selectable ? 1 : 0);
 
   return (
-    <div className={cn('flex flex-col border border-border-default', className)} {...props}>
+    <div
+      ref={containerRef}
+      tabIndex={clearOnDelete && cellSelection !== 'none' ? 0 : undefined}
+      onKeyDown={handleContainerKeyDown}
+      className={cn('flex flex-col border border-border-default outline-none', className)}
+      {...props}
+    >
       <div
         ref={scrollRef}
         className="relative overflow-auto"
@@ -314,7 +463,7 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
                       ? '▲'
                       : '▼';
                 const filterActive = (filters[col.id]?.size ?? 0) > 0;
-                const isFilterOpen = openFilterColId === col.id;
+                const isFilterOpen = openFilter?.colId === col.id;
                 return (
                   <th
                     key={col.id}
@@ -359,7 +508,20 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
                           onClick={(e) => {
                             // sortable header onClick과 충돌하지 않도록.
                             e.stopPropagation();
-                            setOpenFilterColId((cur) => (cur === col.id ? null : col.id));
+                            if (isFilterOpen) {
+                              setOpenFilter(null);
+                            } else {
+                              const r = e.currentTarget.getBoundingClientRect();
+                              setOpenFilter({
+                                colId: col.id,
+                                anchorRect: {
+                                  left: r.left,
+                                  top: r.top,
+                                  bottom: r.bottom,
+                                  right: r.right,
+                                },
+                              });
+                            }
                           }}
                           className={cn(
                             'inline-flex h-4 w-4 items-center justify-center hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
@@ -370,14 +532,6 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
                         </button>
                       )}
                     </span>
-                    {isFilterOpen && (
-                      <FilterPopover
-                        allValues={collectUniqueValues(col, data, tree ? getChildren : undefined)}
-                        excluded={filters[col.id] ?? new Set()}
-                        onApply={(next) => applyFilter(col.id, next)}
-                        onClose={() => setOpenFilterColId(null)}
-                      />
-                    )}
                   </th>
                 );
               })}
@@ -405,6 +559,9 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
               onCellActivate={activateCell}
               tree={tree}
               onToggleExpand={toggleExpand}
+              selectedCells={selectedCells}
+              onCellMouseDown={handleCellMouseDown}
+              onCellMouseEnter={handleCellMouseEnter}
             />
           ) : (
             <tbody>
@@ -421,6 +578,9 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
                   onCellActivate={activateCell}
                   tree={tree}
                   onToggleExpand={toggleExpand}
+                  selectedCells={selectedCells}
+                  onCellMouseDown={handleCellMouseDown}
+                  onCellMouseEnter={handleCellMouseEnter}
                 />
               ))}
             </tbody>
@@ -431,6 +591,21 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
       {pageSize > 0 && showPagination && (
         <GridPagination page={page} pageCount={pageCount} onPageChange={setPage} />
       )}
+
+      {openFilter &&
+        (() => {
+          const col = columns.find((c) => c.id === openFilter.colId);
+          if (!col) return null;
+          return (
+            <FilterPopover
+              anchorRect={openFilter.anchorRect}
+              allValues={collectUniqueValues(col, data, tree ? getChildren : undefined)}
+              excluded={filters[openFilter.colId] ?? new Set()}
+              onApply={(next) => applyFilter(openFilter.colId, next)}
+              onClose={() => setOpenFilter(null)}
+            />
+          );
+        })()}
     </div>
   );
 }) as <TRow = Record<string, unknown>>(
@@ -495,6 +670,12 @@ interface GridRowProps<TRow> {
   onCellActivate: (rowId: RowId, columnId: string) => void;
   tree: boolean;
   onToggleExpand: (id: RowId) => void;
+  /** multi-select 모드에서 선택된 cellKey(`${rowId} ${columnId}`) 집합. */
+  selectedCells: Set<string>;
+  /** multi-select 모드 mousedown — 드래그 시작. */
+  onCellMouseDown: (rowId: RowId, columnId: string, e: React.MouseEvent) => void;
+  /** multi-select 모드 mouseenter — 드래그 중 사각형 갱신. */
+  onCellMouseEnter: (rowId: RowId, columnId: string) => void;
   height?: number;
 }
 
@@ -509,6 +690,9 @@ function GridRow<TRow>({
   onCellActivate,
   tree,
   onToggleExpand,
+  selectedCells,
+  onCellMouseDown,
+  onCellMouseEnter,
   height,
 }: GridRowProps<TRow>) {
   const { row, id, level, hasChildren, expanded } = flatRow;
@@ -533,16 +717,23 @@ function GridRow<TRow>({
         const isEditable = col.editable && typeof col.accessor === 'string';
         const value = getCellValue(col, row);
         const isActive = activeCell?.rowId === id && activeCell.columnId === col.id;
+        const cellKeyStr = `${id}${col.id}`;
+        const isMultiSelected = selectedCells.has(cellKeyStr);
         const isFirstCol = colIdx === 0;
 
         return (
           <td
             key={col.id}
-            aria-selected={isActive || undefined}
+            aria-selected={isActive || isMultiSelected || undefined}
             onClick={() => onCellActivate(id, col.id)}
+            onMouseDown={(e) => onCellMouseDown(id, col.id, e)}
+            onMouseEnter={() => onCellMouseEnter(id, col.id)}
             className={cn(
-              'relative cursor-pointer px-3 py-2 text-foreground',
+              'relative cursor-pointer select-none px-3 py-2 text-foreground',
+              // active 셀: outline ring 강조 (단일 셀)
               isActive && 'z-[1] outline outline-2 -outline-offset-2 outline-ring',
+              // multi-select 영역(active 제외): surface bg + 옅은 ring outline
+              !isActive && isMultiSelected && 'bg-surface',
               align === 'right' && 'text-right',
               align === 'center' && 'text-center',
               (!align || align === 'left') && 'text-left',
@@ -605,6 +796,9 @@ interface VirtualizedBodyProps<TRow> {
   onCellActivate: (rowId: RowId, columnId: string) => void;
   tree: boolean;
   onToggleExpand: (id: RowId) => void;
+  selectedCells: Set<string>;
+  onCellMouseDown: (rowId: RowId, columnId: string, e: React.MouseEvent) => void;
+  onCellMouseEnter: (rowId: RowId, columnId: string) => void;
 }
 
 function VirtualizedBody<TRow>({
@@ -620,6 +814,9 @@ function VirtualizedBody<TRow>({
   onCellActivate,
   tree,
   onToggleExpand,
+  selectedCells,
+  onCellMouseDown,
+  onCellMouseEnter,
 }: VirtualizedBodyProps<TRow>) {
   const items = virtualizer.getVirtualItems();
   const totalSize = virtualizer.getTotalSize();
@@ -652,6 +849,9 @@ function VirtualizedBody<TRow>({
             onCellActivate={onCellActivate}
             tree={tree}
             onToggleExpand={onToggleExpand}
+            selectedCells={selectedCells}
+            onCellMouseDown={onCellMouseDown}
+            onCellMouseEnter={onCellMouseEnter}
             height={rowHeight}
           />
         );

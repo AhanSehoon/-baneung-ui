@@ -157,6 +157,62 @@ export function useGridState<TRow>(
     setSelectedIds(new Set());
   }, [data]);
 
+  /**
+   * 새 행을 지정 위치에 삽입. activeId가 필요한 위치(above/below)는 호출자가
+   * 검증해야 한다 (없으면 함수가 no-op으로 처리).
+   */
+  const addRow = React.useCallback(
+    (
+      newRow: TRow,
+      position: 'first' | 'last' | 'above-active' | 'below-active',
+      activeId?: RowId,
+    ) => {
+      setRows((prev) => {
+        if (position === 'first') return [newRow, ...prev];
+        if (position === 'last') return [...prev, newRow];
+        if (activeId === undefined) return prev;
+        const idx = prev.findIndex((row, i) => getRowId(row, i) === activeId);
+        if (idx === -1) return prev;
+        if (position === 'above-active') return [...prev.slice(0, idx), newRow, ...prev.slice(idx)];
+        return [...prev.slice(0, idx + 1), newRow, ...prev.slice(idx + 1)];
+      });
+    },
+    [getRowId],
+  );
+
+  /** 특정 행 ID 집합을 일괄 삭제 (cell-selection 기반 삭제용). */
+  const removeRowsByIds = React.useCallback(
+    (ids: Set<RowId>) => {
+      if (ids.size === 0) return;
+      const toDelete: TRow[] = [];
+      const kept: TRow[] = [];
+      rows.forEach((row, idx) => {
+        const id = getRowId(row, idx);
+        if (ids.has(id)) {
+          toDelete.push(originals.get(id) ?? row);
+        } else {
+          kept.push(row);
+        }
+      });
+      if (toDelete.length === 0) return;
+      setRows(kept);
+      setDeleted((d) => [...d, ...toDelete]);
+      setEditedIds((prev) => {
+        if (prev.size === 0) return prev;
+        const next = new Set(prev);
+        ids.forEach((id) => next.delete(id));
+        return next;
+      });
+      setSelectedIds((prev) => {
+        if (prev.size === 0) return prev;
+        const next = new Set(prev);
+        ids.forEach((id) => next.delete(id));
+        return next;
+      });
+    },
+    [rows, getRowId, originals],
+  );
+
   const getSavedData = React.useCallback((): TRow[] => rows, [rows]);
 
   const getChangedData = React.useCallback((): TRow[] => {
@@ -181,6 +237,8 @@ export function useGridState<TRow>(
     clearSelection,
     deleteSelected,
     reset,
+    addRow,
+    removeRowsByIds,
     getSavedData,
     getChangedData,
     getDeletedData,

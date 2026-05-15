@@ -1,4 +1,4 @@
-import { act, render, screen, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 import { describe, expect, it } from 'vitest';
@@ -511,6 +511,97 @@ describe('Grid', () => {
   // ───────────────────────────────────────────────────────────────────────────
   // active cell highlight (셀 클릭)
   // ───────────────────────────────────────────────────────────────────────────
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // addRow / removeSelectedRows / multi-cell selection / Delete 키
+  // ───────────────────────────────────────────────────────────────────────────
+
+  it('addRow: first / last 위치에 행 추가 (active 셀 없어도 동작)', async () => {
+    const ref = React.createRef<GridHandle<Row>>();
+    render(<Grid ref={ref} columns={columns} data={sampleData} getRowId={(r) => r.id} />);
+
+    act(() => {
+      ref.current?.addRow({ id: 99, name: '신규-맨앞', price: 0 }, 'first');
+      ref.current?.addRow({ id: 100, name: '신규-맨끝', price: 0 }, 'last');
+    });
+
+    const saved = ref.current?.getSavedData() ?? [];
+    expect(saved[0]?.name).toBe('신규-맨앞');
+    expect(saved[saved.length - 1]?.name).toBe('신규-맨끝');
+    expect(saved.length).toBe(5); // 3 + 2
+  });
+
+  it('addRow: above-active / below-active', async () => {
+    const user = userEvent.setup();
+    const ref = React.createRef<GridHandle<Row>>();
+    render(<Grid ref={ref} columns={columns} data={sampleData} getRowId={(r) => r.id} />);
+
+    // '바나나' 셀을 클릭 → 그 행이 active
+    await user.click(screen.getByText('바나나'));
+
+    act(() => {
+      ref.current?.addRow({ id: 50, name: '바나나-위', price: 0 }, 'above-active');
+      ref.current?.addRow({ id: 51, name: '바나나-아래', price: 0 }, 'below-active');
+    });
+
+    const saved = ref.current?.getSavedData() ?? [];
+    const names = saved.map((r) => r.name);
+    // 순서: 사과, 바나나-위, 바나나, 바나나-아래, 체리
+    expect(names).toEqual(['사과', '바나나-위', '바나나', '바나나-아래', '체리']);
+  });
+
+  it('cellSelection="none": 셀 클릭해도 activeCell 안 됨', async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <Grid columns={columns} data={sampleData} cellSelection="none" getRowId={(r) => r.id} />,
+    );
+    await user.click(screen.getByText('사과'));
+    // outline 없음 — aria-selected가 적용된 td가 없어야 함
+    expect(container.querySelector('td[aria-selected="true"]')).toBeNull();
+  });
+
+  it('removeSelectedRows: active 셀이 속한 행 삭제', async () => {
+    const user = userEvent.setup();
+    const ref = React.createRef<GridHandle<Row>>();
+    render(<Grid ref={ref} columns={columns} data={sampleData} getRowId={(r) => r.id} />);
+
+    await user.click(screen.getByText('바나나'));
+    // 클릭으로 active cell 설정됨을 확인
+    expect(ref.current?.getSavedData()).toHaveLength(3);
+
+    await act(async () => {
+      ref.current?.removeSelectedRows();
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText('바나나')).not.toBeInTheDocument();
+    });
+    expect(screen.getByText('사과')).toBeInTheDocument();
+    const deleted = ref.current?.getDeletedData() ?? [];
+    expect(deleted[0]?.name).toBe('바나나');
+  });
+
+  it('clearSelectedCells: 선택 셀 값을 빈 문자열로', async () => {
+    const user = userEvent.setup();
+    const ref = React.createRef<GridHandle<Row>>();
+    const editableColumns: GridColumn<Row>[] = [
+      { id: 'name', header: '이름', accessor: 'name', editable: true },
+    ];
+    render(<Grid ref={ref} columns={editableColumns} data={sampleData} getRowId={(r) => r.id} />);
+
+    await user.click(screen.getByText('사과'));
+    await act(async () => {
+      ref.current?.clearSelectedCells();
+    });
+
+    await waitFor(() => {
+      const changed = ref.current?.getChangedData() ?? [];
+      expect(changed).toHaveLength(1);
+    });
+    const changed = ref.current?.getChangedData() ?? [];
+    expect(changed[0]?.id).toBe(1);
+    expect(changed[0]?.name).toBe('');
+  });
 
   it('marks clicked cell as active with aria-selected', async () => {
     const user = userEvent.setup();
