@@ -503,6 +503,141 @@ function EditorTypesDemo() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Demo 9: 행 추가/삭제 + multi-cell drag + Delete 키
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface TaskRow {
+  id: number;
+  charge: string;
+  complete: number;
+  startDate: string;
+  endDate: string;
+}
+
+const initialTasks: TaskRow[] = [
+  { id: 1, charge: 'Lawrence', complete: 62, startDate: '2024-02-01', endDate: '2024-08-21' },
+  { id: 2, charge: 'Anna', complete: 99, startDate: '2024-02-01', endDate: '2024-03-31' },
+  { id: 3, charge: 'Steve', complete: 50, startDate: '2024-03-01', endDate: '2024-05-31' },
+];
+
+const editableTaskColumns: GridColumn<TaskRow>[] = [
+  { id: 'id', header: 'ID', accessor: 'id', width: 60, align: 'right' },
+  {
+    id: 'charge',
+    header: 'Charge',
+    accessor: 'charge',
+    editable: true,
+    editor: 'dropdown',
+    options: chargeOptions,
+  },
+  {
+    id: 'complete',
+    header: 'Complete(%)',
+    accessor: 'complete',
+    renderer: 'progress',
+    min: 0,
+    max: 100,
+    editable: true,
+    editor: 'number',
+    width: 140,
+  },
+  {
+    id: 'startDate',
+    header: 'Start Date',
+    accessor: 'startDate',
+    renderer: 'date',
+    dateFormat: 'YYYY/MM/DD',
+    editable: true,
+    editor: 'date',
+    width: 130,
+  },
+  {
+    id: 'endDate',
+    header: 'End Date',
+    accessor: 'endDate',
+    renderer: 'date',
+    dateFormat: 'YYYY/MM/DD',
+    editable: true,
+    editor: 'date',
+    width: 130,
+  },
+];
+
+function RowOperationsDemo() {
+  const gridRef = React.useRef<GridHandle<TaskRow>>(null);
+  // 새 ID 자동 발급용 카운터 (기존 max + 증가)
+  const nextIdRef = React.useRef(initialTasks.length + 1);
+  const blankRow = (): TaskRow => ({
+    id: nextIdRef.current++,
+    charge: 'Anna',
+    complete: 0,
+    startDate: '2024-01-01',
+    endDate: '2024-12-31',
+  });
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-center gap-2 border border-border-default bg-surface px-3 py-2 text-xs">
+        <Muted className="text-xs">행 추가:</Muted>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => gridRef.current?.addRow(blankRow(), 'first')}
+        >
+          최상위
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => gridRef.current?.addRow(blankRow(), 'last')}
+        >
+          최하위
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => gridRef.current?.addRow(blankRow(), 'above-active')}
+        >
+          선택 위
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => gridRef.current?.addRow(blankRow(), 'below-active')}
+        >
+          선택 아래
+        </Button>
+        <div className="mx-2 h-4 w-px bg-border-default" aria-hidden="true" />
+        <Muted className="text-xs">행/셀 삭제:</Muted>
+        <Button variant="outline" size="sm" onClick={() => gridRef.current?.removeSelectedRows()}>
+          선택 행 삭제
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => gridRef.current?.clearSelectedCells()}>
+          선택 셀 클리어
+        </Button>
+        <Button variant="ghost" size="sm" onClick={() => gridRef.current?.reset()}>
+          되돌리기
+        </Button>
+      </div>
+
+      <Muted className="text-xs">
+        💡 단일 셀 클릭 또는 드래그로 여러 셀 선택 (사각형 영역). Delete 키로 선택 셀 값 클리어
+        (그리드 컨테이너 포커스 필요 — 클릭하면 자동 포커스).
+      </Muted>
+
+      <Grid
+        ref={gridRef}
+        columns={editableTaskColumns}
+        data={initialTasks}
+        getRowId={(r) => r.id}
+        cellSelection="multi"
+        clearOnDelete
+      />
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Demo 5: 외부 페이지네이션 (controlled + showPagination=false)
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -676,6 +811,22 @@ export default function GridPage() {
           </Muted>
         </div>
         <EditorTypesDemo />
+      </section>
+
+      {/* Demo 9: 행 추가/삭제 + multi-cell drag + Delete */}
+      <section className="flex flex-col gap-4">
+        <div>
+          <Heading level={2} className="text-2xl">
+            행 추가 · 삭제 · 다중 셀 선택
+          </Heading>
+          <Muted className="text-sm">
+            <code>cellSelection=&quot;multi&quot;</code>로 드래그 다중 선택 활성.
+            <code>clearOnDelete</code>로 Delete 키에 셀 값 클리어 매핑.
+            <code>ref</code> API의 <code>addRow / removeSelectedRows / clearSelectedCells</code>를
+            외부 버튼에서 호출.
+          </Muted>
+        </div>
+        <RowOperationsDemo />
       </section>
 
       <Separator />
