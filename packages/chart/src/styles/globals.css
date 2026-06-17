@@ -1,0 +1,36 @@
+/*
+ * @baneung-pack/chart — 글로벌 스타일 진입점.
+ *
+ * Tailwind v4 CLI가 이 파일을 입력으로 dist/styles.css를 생성한다.
+ * src/components/** 의 클래스 사용을 스캔해 utility를 트리쉐이크.
+ *
+ * # CSS 격리 (Cascade Layers)
+ * @baneung-pack/ui · grid와 동일하게 모든 라이브러리 스타일을 `@layer baneung`에 격리.
+ * 같은 layer를 공유하므로 ui · grid · chart를 함께 임포트해도 layer 정의가
+ * 자연스럽게 머지된다.
+ *
+ * # Three.js / R3F 스타일
+ * <canvas> 자체는 인라인 스타일/props로 제어. 본 CSS는 tooltip / sr-only 같은
+ * HTML 오버레이용 utility 위주.
+ */
+@import 'tailwindcss' layer(baneung);
+@import '@baneung-pack/tokens/css' layer(baneung);
+
+@theme inline {
+  /* 배경 */
+  --color-canvas: var(--color-bg-canvas);
+  --color-surface: var(--color-bg-surface);
+
+  /* 텍스트 */
+  --color-foreground: var(--color-text-primary);
+  --color-foreground-muted: var(--color-text-secondary);
+  --color-foreground-inverse: var(--color-text-inverse);
+
+  /* 차트 컬러 */
+  --color-chart-bar: var(--color-baneungNavy-700);
+  --color-chart-bar-strong: var(--color-baneungNavy-900);
+  --color-chart-accent: var(--color-baneungTeal-500);
+
+  /* 폰트 */
+  --font-sans: var(--typography-font-family-sans);
+}
