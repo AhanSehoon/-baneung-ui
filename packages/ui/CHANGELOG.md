@@ -1,5 +1,18 @@
 # @baneung-pack/ui
 
+## 1.0.9
+
+### Patch Changes
+
+- 라이선스를 **Apache-2.0**으로 명시.
+
+  # 변경
+  - `package.json#license: "Apache-2.0"` 추가
+  - 패키지 루트에 `LICENSE` 파일 (Apache-2.0 전문) 추가
+  - `package.json#files`에 LICENSE 명시 포함
+
+  npmjs.com 패키지 페이지에서 라이선스가 Apache-2.0으로 표시됨.
+
 ## 1.0.8
 
 ### Patch Changes

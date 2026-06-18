@@ -33,9 +33,19 @@ interface PackageHistory {
 
 const uiHistory: PackageHistory = {
   pkg: '@baneung-pack/ui',
-  current: '1.0.8',
+  current: '1.0.9',
   npmUrl: 'https://www.npmjs.com/package/@baneung-pack/ui',
   entries: [
+    {
+      version: '1.0.9',
+      type: 'patch',
+      summary: '라이선스를 Apache-2.0으로 명시',
+      details: [
+        'package.json#license: "Apache-2.0" 추가',
+        '패키지 루트에 LICENSE 파일 (Apache-2.0 전문) 동봉',
+        'npmjs.com 페이지에 라이선스 표시됨',
+      ],
+    },
     {
       version: '1.0.8',
       type: 'patch',
@@ -170,9 +180,19 @@ const tokensHistory: PackageHistory = {
 
 const gridHistory: PackageHistory = {
   pkg: '@baneung-pack/grid',
-  current: '0.8.2',
+  current: '0.8.3',
   npmUrl: 'https://www.npmjs.com/package/@baneung-pack/grid',
   entries: [
+    {
+      version: '0.8.3',
+      type: 'patch',
+      summary: '라이선스를 Apache-2.0으로 명시',
+      details: [
+        'package.json#license: "Apache-2.0" 추가',
+        '패키지 루트에 LICENSE 파일 (Apache-2.0 전문) 동봉',
+        'npmjs.com 페이지에 라이선스 표시됨',
+      ],
+    },
     {
       version: '0.8.2',
       type: 'patch',
