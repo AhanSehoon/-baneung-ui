@@ -1,4 +1,4 @@
-import { GoogleAnalytics } from '@next/third-parties/google';
+import { GoogleTagManager } from '@next/third-parties/google';
 
 import { SiteShell } from '@/components/site-shell';
 import { ThemeProvider } from '@/components/theme-provider';
@@ -21,23 +21,24 @@ export const metadata: Metadata = {
 };
 
 /**
- * Google Analytics (GA4) — `NEXT_PUBLIC_GA_ID` 환경변수가 있으면 GA 스크립트 주입.
+ * Google Tag Manager — `NEXT_PUBLIC_GTM_ID` 환경변수가 있으면 GTM 스크립트 주입.
+ * GTM 컨테이너 안에서 GA·픽셀 등 모든 태그를 통합 관리.
  * 미지정(로컬 dev / 미설정 환경) 시 스킵 → 분석 트래픽이 없는 환경을 자연스럽게 차단.
  *
  * 설정 방법:
- *   - Vercel: Project Settings → Environment Variables → NEXT_PUBLIC_GA_ID = G-XXXXXXXXXX
- *   - 로컬: apps/docs/.env.local 에 NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
+ *   - Vercel: Project Settings → Environment Variables → NEXT_PUBLIC_GTM_ID = GTM-XXXXXXX
+ *   - 로컬: apps/docs/.env.local 에 NEXT_PUBLIC_GTM_ID=GTM-XXXXXXX
  */
-const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
+const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko" suppressHydrationWarning>
+      {GTM_ID && <GoogleTagManager gtmId={GTM_ID} />}
       <body className="bg-canvas text-foreground antialiased">
         <ThemeProvider>
           <SiteShell>{children}</SiteShell>
         </ThemeProvider>
-        {GA_ID && <GoogleAnalytics gaId={GA_ID} />}
       </body>
     </html>
   );
