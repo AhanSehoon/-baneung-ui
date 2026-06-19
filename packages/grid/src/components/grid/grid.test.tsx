@@ -774,4 +774,27 @@ describe('Grid', () => {
     expect(deleted.length).toBe(1);
     expect(deleted[0]?.name).toBe('바나나');
   });
+
+  it('autoSize=true: outer는 h-full w-full, scroll은 flex-1 min-h-0', () => {
+    const { container } = render(<Grid autoSize columns={columns} data={sampleData} />);
+    // outer container
+    const outer = container.firstElementChild as HTMLElement;
+    expect(outer.className).toMatch(/h-full/);
+    expect(outer.className).toMatch(/w-full/);
+    // scroll container (role=region)
+    const scroll = screen.getByRole('region', { name: '데이터 그리드' });
+    expect(scroll.className).toMatch(/flex-1/);
+    expect(scroll.className).toMatch(/min-h-0/);
+    // height/maxHeight style은 적용되지 않음 (부모 컨테이너에 맡김)
+    expect(scroll.style.height).toBe('');
+    expect(scroll.style.maxHeight).toBe('');
+  });
+
+  it('autoSize=false (기본): 기존 height/maxHeight 동작 유지', () => {
+    render(<Grid columns={columns} data={sampleData} height={500} />);
+    const scroll = screen.getByRole('region', { name: '데이터 그리드' });
+    expect(scroll.style.maxHeight).toBe('500px');
+    // flex-1 / min-h-0 미적용
+    expect(scroll.className).not.toMatch(/flex-1/);
+  });
 });

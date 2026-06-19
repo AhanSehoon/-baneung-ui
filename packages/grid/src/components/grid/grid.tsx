@@ -128,6 +128,7 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
     virtualized = false,
     rowHeight = 36,
     height = 400,
+    autoSize = false,
     pageSize = 0,
     showPagination = true,
     page: pageProp,
@@ -435,13 +436,27 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
       ref={containerRef}
       tabIndex={clearOnDelete && cellSelection !== 'none' ? 0 : undefined}
       onKeyDown={handleContainerKeyDown}
-      className={cn('flex flex-col border border-border-default outline-none', className)}
+      className={cn(
+        'flex flex-col border border-border-default outline-none',
+        // autoSize 시 부모 컨테이너에 꽉 맞춤 (caller 측이 부모 div에 명시적 height을 줘야 함)
+        autoSize && 'h-full w-full',
+        className,
+      )}
       {...props}
     >
       <div
         ref={scrollRef}
-        className="relative overflow-auto"
-        style={{ height: virtualized ? heightStyle : undefined, maxHeight: heightStyle }}
+        className={cn(
+          'relative overflow-auto',
+          // autoSize 시 남는 세로 공간 전부 차지 (페이지네이션 푸터는 자동으로 바닥에 고정).
+          // min-h-0는 flex-shrink가 작동하려면 필수 — 없으면 콘텐츠가 컨테이너 밖으로 넘침.
+          autoSize && 'flex-1 min-h-0',
+        )}
+        style={
+          autoSize
+            ? undefined
+            : { height: virtualized ? heightStyle : undefined, maxHeight: heightStyle }
+        }
         role="region"
         aria-label="데이터 그리드"
       >

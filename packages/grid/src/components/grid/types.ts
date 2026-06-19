@@ -89,8 +89,25 @@ export interface GridProps<TRow = Record<string, unknown>> extends Omit<
   virtualized?: boolean;
   /** 행 높이(px). 가상화 모드에서 정확한 스크롤 계산을 위해 사용. 기본 36. */
   rowHeight?: number;
-  /** 가상화 컨테이너 높이(px 또는 CSS string). 기본 400. */
+  /** 가상화 컨테이너 높이(px 또는 CSS string). 기본 400. `autoSize=true`면 무시. */
   height?: number | string;
+  /**
+   * 부모 컨테이너에 꽉 맞춰 자동 리사이즈. 기본 false.
+   *
+   * 활성 시:
+   * - outer가 `h-full w-full` → 부모 div 크기 100% 채움
+   * - 스크롤 영역이 `flex: 1` → 남는 세로 공간 모두 차지 (페이지네이션 푸터는 자동으로 바닥)
+   * - 부모 크기가 변하면 자동 반영 (ResizeObserver는 가상화 라이브러리가 내장 처리)
+   * - `height` prop은 무시됨
+   *
+   * 사용 예:
+   * ```jsx
+   * <div style={{ height: 'calc(100vh - 80px)' }}>
+   *   <Grid autoSize columns={...} data={...} />
+   * </div>
+   * ```
+   */
+  autoSize?: boolean;
   /** 페이지당 행 수. `pageSize > 0` 이면 페이지네이션 활성. 기본 0 (비활성). */
   pageSize?: number;
   /** 내장 페이지네이션 UI 표시 여부. 외부 페이징 사용 시 false. 기본 true. */
