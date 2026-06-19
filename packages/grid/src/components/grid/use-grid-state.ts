@@ -67,15 +67,17 @@ export function useGridState<TRow>(
    */
   const editCell = React.useCallback(
     (id: RowId, columnKey: string, value: unknown) => {
-      // 1. 미리 새 row를 계산 — onRowChange에 넘기기 위해 closure 밖에서 보관.
-      const idx = rows.findIndex((row, i) => getRowId(row, i) === id);
-      if (idx === -1) return;
-      const target = rows[idx];
-      if (target === undefined) return;
-      const updated = { ...(target as Record<string, unknown>), [columnKey]: value } as TRow;
-
-      // 2. state 업데이트 (updater 안에서는 외부 콜백 호출 금지)
-      setRows((prev) => prev.map((row, i) => (getRowId(row, i) === id ? updated : row)));
+      // 1. setState updater 안에서 prev 기준으로 merge — 같은 tick에 여러 editCell이 호출돼도
+      //    closure의 stale `rows`로 덮어쓰지 않게 함 (e.g., paste 시 한 행에 여러 컬럼 동시 입력).
+      let updatedRow: TRow | null = null;
+      setRows((prev) =>
+        prev.map((row, i) => {
+          if (getRowId(row, i) !== id) return row;
+          const merged = { ...(row as Record<string, unknown>), [columnKey]: value } as TRow;
+          updatedRow = merged;
+          return merged;
+        }),
+      );
       setEditedIds((prev) => {
         if (prev.has(id)) return prev;
         const next = new Set(prev);
@@ -83,10 +85,10 @@ export function useGridState<TRow>(
         return next;
       });
 
-      // 3. 외부 콜백은 state 업데이트 스케줄 후 호출 (setState는 비동기지만 같은 tick).
-      onRowChange?.(updated, id);
+      // 2. 외부 콜백 — updater에서 캡처한 최신 row 전달 (없으면 호출 X = id 매칭 실패).
+      if (updatedRow !== null) onRowChange?.(updatedRow, id);
     },
-    [rows, getRowId, onRowChange],
+    [getRowId, onRowChange],
   );
 
   const toggleRow = React.useCallback((id: RowId) => {

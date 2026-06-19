@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -796,5 +796,95 @@ describe('Grid', () => {
     expect(scroll.style.maxHeight).toBe('500px');
     // flex-1 / min-h-0 미적용
     expect(scroll.className).not.toMatch(/flex-1/);
+  });
+
+  it('exportXlsx: ref API 호출 시 Blob URL을 통해 anchor click 발생', async () => {
+    const ref = React.createRef<GridHandle<Row>>();
+    render(<Grid ref={ref} columns={columns} data={sampleData} />);
+
+    // exceljs는 무거우므로 download spy로 트리거 검증만 (실제 Excel 파싱 X)
+    const createObjectURL = vi.fn().mockReturnValue('blob:mock-url');
+    const revokeObjectURL = vi.fn();
+    Object.defineProperty(URL, 'createObjectURL', {
+      configurable: true,
+      writable: true,
+      value: createObjectURL,
+    });
+    Object.defineProperty(URL, 'revokeObjectURL', {
+      configurable: true,
+      writable: true,
+      value: revokeObjectURL,
+    });
+    const clickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(() => undefined);
+
+    await ref.current?.exportXlsx({ filename: 'test.xlsx' });
+
+    expect(createObjectURL).toHaveBeenCalled();
+    expect(clickSpy).toHaveBeenCalled();
+    clickSpy.mockRestore();
+  });
+
+  it('clipboard=true + Ctrl+C: 선택된 셀이 TSV로 navigator.clipboard에 복사', async () => {
+    const user = userEvent.setup();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText, readText: vi.fn().mockResolvedValue('') },
+    });
+
+    render(<Grid columns={columns} data={sampleData} clipboard cellSelection="single" />);
+
+    // 첫 행 이름 셀 클릭 → active 상태
+    const cell = screen.getByText('사과').closest('td')!;
+    await user.click(cell);
+
+    // 키 입력 — fireEvent로 컨테이너에 직접 keydown 발송
+    const container = cell.closest('[tabindex="0"]') as HTMLElement;
+    fireEvent.keyDown(container, { key: 'c', ctrlKey: true });
+
+    await waitFor(() => {
+      expect(writeText).toHaveBeenCalled();
+    });
+    // 단일 셀 복사 → '사과'만 TSV에
+    expect(writeText.mock.calls[0]?.[0]).toBe('사과');
+  });
+
+  it('clipboard=true + Ctrl+V: TSV를 active 셀부터 행/열로 분산해 입력', async () => {
+    const user = userEvent.setup();
+    const ref = React.createRef<GridHandle<Row>>();
+    // Excel에서 복사한 듯한 2x2 TSV (이름, 가격)
+    const readText = vi.fn().mockResolvedValue('딸기\t1500\n포도\t2500');
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText: vi.fn().mockResolvedValue(undefined), readText },
+    });
+
+    render(
+      <Grid
+        ref={ref}
+        columns={columns}
+        data={sampleData}
+        clipboard
+        cellSelection="single"
+        getRowId={(r) => r.id}
+      />,
+    );
+
+    // 첫 행 이름 셀 클릭 → active 시작 위치
+    const cell = screen.getByText('사과').closest('td')!;
+    await user.click(cell);
+    const container = cell.closest('[tabindex="0"]') as HTMLElement;
+    fireEvent.keyDown(container, { key: 'v', ctrlKey: true });
+
+    // editCell이 비동기 호출되므로 잠시 대기
+    await waitFor(() => {
+      const saved = ref.current?.getSavedData() ?? [];
+      const r1 = saved.find((r) => r.id === 1);
+      const r2 = saved.find((r) => r.id === 2);
+      expect(r1?.name).toBe('딸기');
+      expect(r2?.name).toBe('포도');
+    });
   });
 });

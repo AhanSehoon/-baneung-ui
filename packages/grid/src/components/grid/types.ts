@@ -148,6 +148,19 @@ export interface GridProps<TRow = Record<string, unknown>> extends Omit<
    */
   clearOnDelete?: boolean;
   /**
+   * 클립보드 (Ctrl+C / Ctrl+V) 활성화. 기본 false.
+   *
+   * 활성 시 — 그리드 컨테이너에 포커스(`tabIndex={0}`)가 있을 때:
+   * - **Ctrl+C**: 선택된 셀들을 TSV(탭 구분) 포맷으로 clipboard에 복사 →
+   *   **Excel에 그대로 붙여넣기 가능**
+   * - **Ctrl+V**: clipboard의 TSV를 active 셀 시작 위치부터 일괄 입력 →
+   *   **Excel에서 복사한 셀 범위를 그리드에 붙여넣기 가능**
+   *
+   * `cellSelection`이 'none'이 아니어야 의미 있다. 'multi' 권장.
+   * accessor가 string key인 컬럼만 paste로 입력됨 (함수 accessor는 set 불가).
+   */
+  clipboard?: boolean;
+  /**
    * Tree(계층) 모드. 첫 컬럼에 caret + 들여쓰기를 자동 삽입해 펼침/접힘 가능한
    * 트리뷰로 렌더한다. `getChildren`이 함께 필요.
    *
@@ -235,4 +248,29 @@ export interface GridHandle<TRow = Record<string, unknown>> {
    * - `rows`: 명시한 행만 export. 미지정 시 `getSavedData()` 사용 (편집 반영, 삭제 제외).
    */
   exportCsv(filename?: string, options?: { rows?: TRow[] }): void;
+  /**
+   * 현재 그리드 데이터를 Excel(.xlsx) 파일로 다운로드.
+   *
+   * # CSV vs XLSX
+   * CSV는 값만 저장 — 한글 인코딩·날짜·천 단위·셀 폭·서식이 손실됨.
+   * XLSX는 셀 타입(숫자/날짜/문자) + 컬럼 폭 + 헤더 스타일 + 정렬을 보존.
+   *
+   * # 옵션
+   * - `filename` (기본 'grid.xlsx')
+   * - `sheetName` (기본 'Sheet1')
+   * - `rows`: 명시한 행만. 미지정 시 `getSavedData()`.
+   * - `styledHeader` (기본 true): 헤더 굵게 + 옅은 배경 + freeze
+   *
+   * # 의존성
+   * exceljs를 동적 import — 평소 번들에 포함 X, 호출 시점에만 로드.
+   * 미설치 시 명확한 에러 throw — `pnpm add exceljs`로 설치.
+   *
+   * @returns Promise — 다운로드 트리거까지 완료 시 resolve. await 가능.
+   */
+  exportXlsx(options?: {
+    filename?: string;
+    sheetName?: string;
+    rows?: TRow[];
+    styledHeader?: boolean;
+  }): Promise<void>;
 }

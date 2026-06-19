@@ -1,6 +1,7 @@
 import { useVirtualizer, type Virtualizer } from '@tanstack/react-virtual';
 import * as React from 'react';
 
+import { buildTsv, parseTsv, readClipboard, writeClipboard } from './clipboard';
 import { buildCsv, downloadCsv } from './csv';
 import { EditableCell } from './editable-cell';
 import { FilterPopover } from './filter-popover';
@@ -9,6 +10,7 @@ import { SelectionCheckbox } from './selection-checkbox';
 import { applySortAndFilter, collectUniqueValues, nextSortState } from './sort-filter';
 import { collectExpandableIds, flattenTree, type FlatRow } from './tree-utils';
 import { useGridState } from './use-grid-state';
+import { exportXlsx as exportXlsxHelper } from './xlsx';
 import { cn } from '../../lib/cn';
 
 import type { GridColumn, GridHandle, GridProps, GridSortState } from './types';
@@ -142,6 +144,7 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
     defaultExpandedIds = 'none',
     cellSelection = 'single',
     clearOnDelete = false,
+    clipboard = false,
     className,
     ...props
   }: GridProps<TRow>,
@@ -329,6 +332,24 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
     [state, columns],
   );
 
+  // XLSX export — exceljs 동적 로드. Promise 반환.
+  const exportXlsx = React.useCallback(
+    async (options?: {
+      filename?: string;
+      sheetName?: string;
+      rows?: TRow[];
+      styledHeader?: boolean;
+    }): Promise<void> => {
+      const targetRows = options?.rows ?? state.getSavedData();
+      await exportXlsxHelper(columns, targetRows, {
+        filename: options?.filename,
+        sheetName: options?.sheetName,
+        styledHeader: options?.styledHeader,
+      });
+    },
+    [state, columns],
+  );
+
   // 8. imperative API
   React.useImperativeHandle(
     ref,
@@ -344,8 +365,9 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
       removeSelectedRows,
       clearSelectedCells,
       exportCsv,
+      exportXlsx,
     }),
-    [state, addRow, removeSelectedRows, clearSelectedCells, exportCsv],
+    [state, addRow, removeSelectedRows, clearSelectedCells, exportCsv, exportXlsx],
   );
 
   // 9. multi-cell drag — mousedown으로 시작, mousemove로 사각형 갱신, mouseup으로 종료.
@@ -400,24 +422,137 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
     return () => document.removeEventListener('mouseup', onUp);
   }, [cellSelection]);
 
-  // 10. Delete 키 — 옵션 켜진 경우 선택된 셀 값 클리어. 컨테이너 포커스 시에만 작동.
+  // 10-a. 선택된 셀 → TSV 직렬화 후 clipboard 쓰기 (Ctrl+C).
+  //   selectedCells가 비어있으면 activeCell만. 사각형 bounding box 안의 모든 셀 값을 행렬로.
+  const copySelectedCells = React.useCallback(async (): Promise<void> => {
+    if (cellSelection === 'none') return;
+    interface Pos {
+      rowIdx: number;
+      colIdx: number;
+    }
+    const positions: Pos[] = [];
+    if (selectedCells.size > 0) {
+      selectedCells.forEach((key) => {
+        const sep = key.indexOf('\x1F');
+        if (sep < 0) return;
+        const rawId = key.slice(0, sep);
+        const colId = key.slice(sep + 1);
+        const asNum = Number(rawId);
+        const rowId = Number.isFinite(asNum) && String(asNum) === rawId ? asNum : rawId;
+        const rIdx = visibleFlatRows.findIndex((fr) => fr.id === rowId);
+        const cIdx = columns.findIndex((c) => c.id === colId);
+        if (rIdx >= 0 && cIdx >= 0) positions.push({ rowIdx: rIdx, colIdx: cIdx });
+      });
+    } else if (activeCell) {
+      const rIdx = visibleFlatRows.findIndex((fr) => fr.id === activeCell.rowId);
+      const cIdx = columns.findIndex((c) => c.id === activeCell.columnId);
+      if (rIdx >= 0 && cIdx >= 0) positions.push({ rowIdx: rIdx, colIdx: cIdx });
+    }
+    if (positions.length === 0) return;
+    // bounding rect 계산
+    let minRow = Infinity;
+    let maxRow = -Infinity;
+    let minCol = Infinity;
+    let maxCol = -Infinity;
+    positions.forEach((p) => {
+      if (p.rowIdx < minRow) minRow = p.rowIdx;
+      if (p.rowIdx > maxRow) maxRow = p.rowIdx;
+      if (p.colIdx < minCol) minCol = p.colIdx;
+      if (p.colIdx > maxCol) maxCol = p.colIdx;
+    });
+    // bounding rect 전체 셀 값으로 matrix 생성 (사용자가 사각형 선택했을 때 자연스러움)
+    const matrix: unknown[][] = [];
+    for (let r = minRow; r <= maxRow; r += 1) {
+      const flatRow = visibleFlatRows[r];
+      if (!flatRow) continue;
+      const row: unknown[] = [];
+      for (let c = minCol; c <= maxCol; c += 1) {
+        const col = columns[c];
+        if (!col) continue;
+        row.push(getCellValue(col, flatRow.row));
+      }
+      matrix.push(row);
+    }
+    const tsv = buildTsv(matrix);
+    await writeClipboard(tsv);
+  }, [cellSelection, selectedCells, activeCell, visibleFlatRows, columns]);
+
+  // 10-b. clipboard TSV → activeCell 위치부터 셀에 일괄 입력 (Ctrl+V).
+  //   accessor가 string key인 컬럼만 적용 (함수 accessor는 set 불가 → 스킵).
+  const pasteFromClipboard = React.useCallback(async (): Promise<void> => {
+    if (cellSelection === 'none' || !activeCell) return;
+    const tsv = await readClipboard();
+    if (!tsv) return;
+    const matrix = parseTsv(tsv);
+    if (matrix.length === 0) return;
+    const startRow = visibleFlatRows.findIndex((fr) => fr.id === activeCell.rowId);
+    const startCol = columns.findIndex((c) => c.id === activeCell.columnId);
+    if (startRow < 0 || startCol < 0) return;
+    matrix.forEach((rowValues, r) => {
+      const targetIdx = startRow + r;
+      if (targetIdx >= visibleFlatRows.length) return;
+      const flatRow = visibleFlatRows[targetIdx];
+      if (!flatRow) return;
+      rowValues.forEach((value, c) => {
+        const colIdx = startCol + c;
+        if (colIdx >= columns.length) return;
+        const col = columns[colIdx];
+        if (!col || typeof col.accessor !== 'string') return;
+        state.editCell(flatRow.id, col.accessor, value);
+      });
+    });
+  }, [cellSelection, activeCell, visibleFlatRows, columns, state]);
+
+  // 10. 키 입력 핸들러 — Delete/Backspace, Ctrl+C, Ctrl+V를 한 곳에서 처리.
   const handleContainerKeyDown = React.useCallback(
     (e: React.KeyboardEvent) => {
-      if (!clearOnDelete) return;
-      if (cellSelection === 'none') return;
-      if (e.key !== 'Delete' && e.key !== 'Backspace') return;
-      // 편집 중인 input 안에서의 Delete는 무시 — 텍스트 편집 우선
       const target = e.target as HTMLElement;
+      const inEditor =
+        target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT';
+
+      // Ctrl+C / Cmd+C — 선택된 셀 TSV 복사
       if (
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.tagName === 'SELECT'
-      )
+        clipboard &&
+        cellSelection !== 'none' &&
+        !inEditor &&
+        (e.ctrlKey || e.metaKey) &&
+        (e.key === 'c' || e.key === 'C')
+      ) {
+        e.preventDefault();
+        void copySelectedCells();
         return;
-      e.preventDefault();
-      clearSelectedCells();
+      }
+      // Ctrl+V / Cmd+V — clipboard TSV 붙여넣기
+      if (
+        clipboard &&
+        cellSelection !== 'none' &&
+        !inEditor &&
+        (e.ctrlKey || e.metaKey) &&
+        (e.key === 'v' || e.key === 'V')
+      ) {
+        e.preventDefault();
+        void pasteFromClipboard();
+        return;
+      }
+      // Delete/Backspace — 선택된 셀 값 클리어 (clearOnDelete 옵션)
+      if (
+        clearOnDelete &&
+        cellSelection !== 'none' &&
+        (e.key === 'Delete' || e.key === 'Backspace')
+      ) {
+        if (inEditor) return;
+        e.preventDefault();
+        clearSelectedCells();
+      }
     },
-    [clearOnDelete, cellSelection, clearSelectedCells],
+    [
+      clipboard,
+      clearOnDelete,
+      cellSelection,
+      copySelectedCells,
+      pasteFromClipboard,
+      clearSelectedCells,
+    ],
   );
 
   const heightStyle = typeof height === 'number' ? `${height}px` : height;
@@ -434,7 +569,7 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
   return (
     <div
       ref={containerRef}
-      tabIndex={clearOnDelete && cellSelection !== 'none' ? 0 : undefined}
+      tabIndex={(clearOnDelete || clipboard) && cellSelection !== 'none' ? 0 : undefined}
       onKeyDown={handleContainerKeyDown}
       className={cn(
         'flex flex-col border border-border-default outline-none',
