@@ -33,9 +33,18 @@ interface PackageHistory {
 
 const uiHistory: PackageHistory = {
   pkg: '@baneung-pack/ui',
-  current: '1.0.9',
+  current: '1.0.10',
   npmUrl: 'https://www.npmjs.com/package/@baneung-pack/ui',
   entries: [
+    {
+      version: '1.0.10',
+      type: 'patch',
+      summary: 'README 라이선스 배지 Apache-2.0으로 통일 (코드 변경 없음)',
+      details: [
+        'README의 MIT 배지·푸터를 Apache-2.0으로 교체',
+        'npmjs.com 페이지에 노출되는 라이선스 표기 일관성',
+      ],
+    },
     {
       version: '1.0.9',
       type: 'patch',
@@ -149,9 +158,20 @@ const uiHistory: PackageHistory = {
 
 const tokensHistory: PackageHistory = {
   pkg: '@baneung-pack/tokens',
-  current: '1.0.2',
+  current: '1.0.3',
   npmUrl: 'https://www.npmjs.com/package/@baneung-pack/tokens',
   entries: [
+    {
+      version: '1.0.3',
+      type: 'patch',
+      summary: '라이선스를 Apache-2.0으로 명시',
+      details: [
+        'package.json#license: "Apache-2.0" 신규 추가 (이전엔 license 필드 누락)',
+        '패키지 루트에 LICENSE 파일 (Apache-2.0 전문) 동봉',
+        'README의 MIT 배지·푸터를 Apache-2.0으로 교체',
+        'npmjs.com 페이지에 라이선스 표시됨',
+      ],
+    },
     {
       version: '1.0.2',
       type: 'patch',
@@ -180,9 +200,21 @@ const tokensHistory: PackageHistory = {
 
 const gridHistory: PackageHistory = {
   pkg: '@baneung-pack/grid',
-  current: '0.8.3',
+  current: '0.8.4',
   npmUrl: 'https://www.npmjs.com/package/@baneung-pack/grid',
   entries: [
+    {
+      version: '0.8.4',
+      type: 'patch',
+      summary: 'autoSize prop 신규 — 부모 컨테이너에 꽉 맞춰 자동 리사이즈',
+      details: [
+        '활성 시 outer가 h-full w-full + scroll이 flex-1 min-h-0 → 부모 div 100% 채움',
+        '페이지네이션 푸터는 자동으로 바닥에 고정',
+        '부모 크기 변경 시 자동 반영 (virtualizer 내장 ResizeObserver)',
+        'height prop은 무시. 기본 false → 기존 동작 그대로 (backwards-compatible)',
+        'README의 MIT 배지·푸터를 Apache-2.0으로 함께 교체',
+      ],
+    },
     {
       version: '0.8.3',
       type: 'patch',

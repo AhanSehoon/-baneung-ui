@@ -1,5 +1,26 @@
 # @baneung-pack/tokens
 
+## 1.0.3
+
+### Patch Changes
+
+- 라이선스를 Apache-2.0으로 통일.
+
+  # 공통 변경
+  - README의 라이선스 배지/푸터 MIT → Apache-2.0
+
+  # `@baneung-pack/grid`만 추가
+  - `autoSize` prop 신규 — 부모 컨테이너에 꽉 맞춰 자동 리사이즈
+    (활성 시 outer가 `h-full w-full`, scroll이 `flex-1 min-h-0` →
+    부모 div 크기에 따라 그리드가 자동 확장)
+
+  # `@baneung-pack/tokens`만 추가
+  - `package.json#license: "Apache-2.0"` 신규 추가 (이전엔 license 필드 누락)
+  - 패키지 루트에 LICENSE 파일 동봉
+
+  # `@baneung-pack/ui`
+  - 코드 변경 없음. README 배지 업데이트만.
+
 ## 1.0.2
 
 ### Patch Changes
