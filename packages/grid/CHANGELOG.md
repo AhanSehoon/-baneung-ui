@@ -1,5 +1,15 @@
 # @baneung-pack/grid
 
+## 0.9.1
+
+### Patch Changes
+
+- README 데모 사이트 URL을 새 커스텀 도메인으로 갱신:
+  - 이전: https://baneung-ui-docs-op7v.vercel.app
+  - 변경: https://ui.baneung.com
+
+  코드 변경 없음. README 링크 한 줄 갱신.
+
 ## 0.9.0
 
 ### Minor Changes

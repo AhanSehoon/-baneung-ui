@@ -33,9 +33,19 @@ interface PackageHistory {
 
 const uiHistory: PackageHistory = {
   pkg: '@baneung-pack/ui',
-  current: '1.0.10',
+  current: '1.0.11',
   npmUrl: 'https://www.npmjs.com/package/@baneung-pack/ui',
   entries: [
+    {
+      version: '1.0.11',
+      type: 'patch',
+      summary: 'README 데모 사이트 URL을 새 커스텀 도메인으로 갱신',
+      details: [
+        '이전: https://baneung-ui-docs-op7v.vercel.app',
+        '변경: https://ui.baneung.com',
+        '코드 변경 없음. README 링크 한 줄 갱신.',
+      ],
+    },
     {
       version: '1.0.10',
       type: 'patch',
@@ -158,9 +168,19 @@ const uiHistory: PackageHistory = {
 
 const tokensHistory: PackageHistory = {
   pkg: '@baneung-pack/tokens',
-  current: '1.0.3',
+  current: '1.0.4',
   npmUrl: 'https://www.npmjs.com/package/@baneung-pack/tokens',
   entries: [
+    {
+      version: '1.0.4',
+      type: 'patch',
+      summary: 'README 데모 사이트 URL을 새 커스텀 도메인으로 갱신',
+      details: [
+        '이전: https://baneung-ui-docs-op7v.vercel.app',
+        '변경: https://ui.baneung.com',
+        '코드 변경 없음.',
+      ],
+    },
     {
       version: '1.0.3',
       type: 'patch',
@@ -200,9 +220,19 @@ const tokensHistory: PackageHistory = {
 
 const gridHistory: PackageHistory = {
   pkg: '@baneung-pack/grid',
-  current: '0.9.0',
+  current: '0.9.1',
   npmUrl: 'https://www.npmjs.com/package/@baneung-pack/grid',
   entries: [
+    {
+      version: '0.9.1',
+      type: 'patch',
+      summary: 'README 데모 사이트 URL을 새 커스텀 도메인으로 갱신',
+      details: [
+        '이전: https://baneung-ui-docs-op7v.vercel.app',
+        '변경: https://ui.baneung.com',
+        '코드 변경 없음.',
+      ],
+    },
     {
       version: '0.9.0',
       type: 'minor',
