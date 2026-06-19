@@ -334,3 +334,266 @@ export function RowOperationsDemo() {
     </>
   );
 }`;
+
+export const quickFilterCode = `import { Grid } from '@baneung-pack/grid';
+import { Input } from '@baneung-pack/ui';
+
+export function QuickFilterDemo() {
+  const [q, setQ] = useState('');
+  return (
+    <>
+      <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="검색" />
+      <Grid
+        columns={columns}
+        data={data}
+        quickFilter={q}            // ← 모든 컬럼 부분 일치 (case-insensitive)
+        getRowId={(r) => r.id}
+      />
+    </>
+  );
+}`;
+
+export const multiSortResizeCode = `import { Grid } from '@baneung-pack/grid';
+
+// sortable=true 컬럼을 헤더 클릭으로 정렬.
+// Shift+클릭 → 다중 정렬 추가 (asc → desc → 제거).
+// resizable=true → 헤더 우측 경계 드래그로 폭 조절.
+export function MultiSortResizeDemo() {
+  return (
+    <Grid
+      columns={columns}
+      data={data}
+      getRowId={(r) => r.id}
+      resizable                            // ← 컬럼 폭 드래그 조절
+      onColumnResize={(colId, w) => {
+        localStorage.setItem(\`grid-w-\${colId}\`, String(w));
+      }}
+    />
+  );
+}`;
+
+export const columnVisibilityCode = `import { Grid, type GridHandle } from '@baneung-pack/grid';
+
+// showColumnMenu=true → 우상단 ⚙️ 버튼 + 체크박스 popover로 컬럼 표시/숨김.
+// 또는 column.hidden=true로 초기 숨김 / column.hideable=false로 사용자 토글 차단.
+// controlled: columnVisibility prop + onColumnVisibilityChange.
+export function ColumnVisibilityDemo() {
+  const gridRef = useRef<GridHandle<Order>>(null);
+  return (
+    <Grid
+      ref={gridRef}
+      columns={columns}
+      data={data}
+      getRowId={(r) => r.id}
+      showColumnMenu                       // ← 우상단 ⚙ 버튼
+    />
+  );
+}`;
+
+export const columnPinCode = `import { Grid, type GridColumn } from '@baneung-pack/grid';
+
+// column.pin: 'left' | 'right' — 가로 스크롤해도 자리 유지.
+// 동일 방향에 여러 컬럼을 pin하면 누적 offset 자동 계산.
+const columns: GridColumn<Order>[] = [
+  { id: 'id', header: '주문번호', accessor: 'id', width: 90, pin: 'left' },   // ← 좌측 고정
+  { id: 'customer', header: '고객명', accessor: 'customer', width: 100, pin: 'left' },
+  { id: 'product', header: '상품', accessor: 'product', width: 200 },
+  { id: 'price', header: '가격', accessor: 'price', width: 130, align: 'right' },
+  { id: 'status', header: '상태', accessor: 'status', width: 100, pin: 'right' }, // ← 우측 고정
+];
+
+export function ColumnPinDemo() {
+  return <Grid columns={columns} data={data} getRowId={(r) => r.id} />;
+}`;
+
+export const footerAggregateCode = `import { Grid, type GridColumn } from '@baneung-pack/grid';
+
+// column.aggregate: 'sum' | 'avg' | 'count' | 'min' | 'max' | function
+// showFooter=true 시 푸터 행에 자동 계산된 집계 표시.
+const columns: GridColumn<Order>[] = [
+  { id: 'id', header: '주문번호', accessor: 'id', aggregate: 'count' },
+  { id: 'qty', header: '수량', accessor: 'qty', aggregate: 'sum' },
+  {
+    id: 'price',
+    header: '가격',
+    accessor: 'price',
+    aggregate: (rows) => {
+      const total = rows.reduce((s, r) => s + r.price * r.qty, 0);
+      return <strong>합계: {total.toLocaleString()}원</strong>;
+    },
+  },
+];
+
+export function FooterAggregateDemo() {
+  return <Grid columns={columns} data={data} showFooter getRowId={(r) => r.id} />;
+}`;
+
+export const conditionalStyleCode = `import { Grid, type GridColumn } from '@baneung-pack/grid';
+
+// column.cellStyle: 값/행 기준 인라인 스타일 (Excel 조건부 서식 패턴).
+// column.cellClassName: 값/행 기준 Tailwind 클래스.
+const columns: GridColumn<Order>[] = [
+  { id: 'product', header: '상품', accessor: 'product' },
+  {
+    id: 'price',
+    header: '가격',
+    accessor: 'price',
+    cellStyle: (v) => {
+      const n = v as number;
+      if (n > 500000) return { backgroundColor: 'rgba(239, 68, 68, 0.1)', fontWeight: 600 };
+      if (n > 300000) return { fontWeight: 600 };
+      return undefined;
+    },
+  },
+  {
+    id: 'status',
+    header: '상태',
+    accessor: 'status',
+    cellClassName: (v) =>
+      v === '취소' ? 'text-danger' : v === '완료' ? 'text-success' : undefined,
+  },
+];`;
+
+export const excelCode = `import { Grid, type GridHandle } from '@baneung-pack/grid';
+import { Button } from '@baneung-pack/ui';
+
+// exportXlsx: ref API — exceljs를 동적 로드 (번들에 미포함).
+// clipboard=true: Ctrl+C/V로 Excel과 셀 범위 호환 (TSV 직렬화).
+export function ExcelDemo() {
+  const ref = useRef<GridHandle<Order>>(null);
+  return (
+    <>
+      <Button onClick={() => ref.current?.exportXlsx({ filename: 'orders.xlsx' })}>
+        XLSX로 내보내기
+      </Button>
+      <Grid
+        ref={ref}
+        columns={columns}
+        data={data}
+        getRowId={(r) => r.id}
+        cellSelection="multi"
+        clipboard                          // ← Ctrl+C/V 활성화
+      />
+    </>
+  );
+}`;
+
+export const keyboardNavCode = `import { Grid } from '@baneung-pack/grid';
+
+// cellSelection !== 'none' 일 때 자동 활성.
+// 화살표 — 셀 이동
+// Tab / Shift+Tab — 다음/이전 셀
+// Enter / Shift+Enter — 다음/이전 행 (같은 컬럼)
+// Home / End — 행 처음/끝
+// Ctrl+Home / Ctrl+End — 그리드 처음/끝
+export function KeyboardNavDemo() {
+  return (
+    <Grid
+      columns={columns}
+      data={data}
+      getRowId={(r) => r.id}
+      cellSelection="single"
+    />
+  );
+}`;
+
+export const contextMenuCode = `import { Grid } from '@baneung-pack/grid';
+
+// contextMenu={true}: 기본 메뉴 (복사 · 붙여넣기 · 셀 클리어 · 행 삭제 · CSV/Excel)
+// contextMenu={(ctx) => items}: 셀별 동적 메뉴.
+//   - ctx.rowId / columnId / row / selectedRowIds
+//   - item.shortcut (단축키 힌트) / disabled / separator 지원
+export function ContextMenuDemo() {
+  return (
+    <Grid
+      columns={columns}
+      data={data}
+      getRowId={(r) => r.id}
+      cellSelection="multi"
+      clipboard
+      contextMenu={(ctx) => [
+        { id: 'detail', label: \`상세보기 #\${ctx.rowId}\`, onClick: () => navigate(\`/\${ctx.rowId}\`) },
+        { separator: true },
+        { id: 'copy', label: '복사', shortcut: 'Ctrl+C', onClick: copySelection },
+        { id: 'delete', label: '삭제', onClick: () => deleteRow(ctx.rowId) },
+      ]}
+    />
+  );
+}`;
+
+export const columnReorderCode = `import { Grid } from '@baneung-pack/grid';
+
+// reorderable=true: 헤더 드래그&드롭으로 컬럼 순서 이동.
+// 같은 pin 그룹 안에서만 순서 변경 (pin 경계 유지).
+// onColumnReorder 콜백으로 새 순서 받기.
+export function ColumnReorderDemo() {
+  return (
+    <Grid
+      columns={columns}
+      data={data}
+      getRowId={(r) => r.id}
+      reorderable                          // ← 헤더 드래그로 순서 변경
+      onColumnReorder={(newOrder) => {
+        localStorage.setItem('my-grid-order', JSON.stringify(newOrder));
+      }}
+    />
+  );
+}`;
+
+export const saveViewCode = `import { Grid, type GridHandle } from '@baneung-pack/grid';
+import { Button } from '@baneung-pack/ui';
+
+// viewKey: 정렬 · 폭 · 표시 · 순서를 localStorage에 자동 저장.
+// 페이지를 떠났다 다시 와도 마지막 설정 유지.
+// ref API: getView() / setView(partial) / clearView()
+export function SaveViewDemo() {
+  const ref = useRef<GridHandle<Task>>(null);
+  return (
+    <>
+      <Button onClick={() => ref.current?.clearView()}>설정 초기화</Button>
+      <Grid
+        ref={ref}
+        columns={columns}
+        data={data}
+        getRowId={(r) => r.id}
+        viewKey="tasks-view"               // ← localStorage 키
+        resizable
+        reorderable
+        showColumnMenu
+      />
+    </>
+  );
+}`;
+
+export const allFeaturesCode = `import { Grid, type GridHandle } from '@baneung-pack/grid';
+
+// 모든 기능을 활성화한 관리자 화면 예제.
+// quickFilter + resizable + reorderable + showColumnMenu + showFooter +
+// cellSelection multi + clipboard + clearOnDelete + contextMenu + viewKey + Pin
+export function AllFeaturesDemo() {
+  const ref = useRef<GridHandle<Task>>(null);
+  const [q, setQ] = useState('');
+  return (
+    <>
+      <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="검색" />
+      <Button onClick={() => ref.current?.exportXlsx({ filename: 'admin.xlsx' })}>XLSX</Button>
+      <Grid
+        ref={ref}
+        columns={columns}              // ← pin/aggregate/cellStyle 등 컬럼 옵션 활용
+        data={data}
+        getRowId={(r) => r.id}
+        quickFilter={q}
+        viewKey="admin-view"
+        resizable
+        reorderable
+        showColumnMenu
+        showFooter
+        cellSelection="multi"
+        clipboard
+        clearOnDelete
+        contextMenu
+        selectable
+      />
+    </>
+  );
+}`;

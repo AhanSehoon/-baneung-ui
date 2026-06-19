@@ -305,6 +305,9 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
       const tgt = columns.find((c) => c.id === targetId);
       // 다른 pin 그룹이면 이동 차단
       if (!src || !tgt || (src.pin ?? null) !== (tgt.pin ?? null)) return;
+      // updater 안에서는 외부 setState 호출 금지 (strict mode에서 두 번 실행될 수 있음 →
+      //   "Cannot update component while rendering another" 경고). next는 closure 캡처 후 외부에서 호출.
+      let newOrder: string[] | null = null;
       setColumnOrder((prev) => {
         const fromIdx = prev.indexOf(sourceId);
         const toIdx = prev.indexOf(targetId);
@@ -312,17 +315,20 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
         const next = [...prev];
         next.splice(fromIdx, 1);
         next.splice(toIdx, 0, sourceId);
-        onColumnReorder?.(next);
+        newOrder = next;
         return next;
       });
+      if (newOrder !== null) onColumnReorder?.(newOrder);
     },
     [columns, onColumnReorder],
   );
   React.useEffect(() => {
     // 새 columns prop과 sync — 기존 순서는 보존, 신규 컬럼은 끝에 append, 사라진 컬럼은 제거.
+    //   방어: prev가 비정상(localStorage 손상 등)이면 newIds로 복구.
     setColumnOrder((prev) => {
-      const knownPrev = new Set(prev);
       const newIds = columns.map((c) => c.id);
+      if (!Array.isArray(prev)) return newIds;
+      const knownPrev = new Set(prev);
       const newSet = new Set(newIds);
       const filtered = prev.filter((id) => newSet.has(id));
       const appended = newIds.filter((id) => !knownPrev.has(id));
@@ -333,11 +339,13 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
   // 화면에 실제 렌더할 컬럼 — drag 순서 적용 → visibility 필터 → pin 그룹 정렬.
   //   순서: left-pinned → unpinned → right-pinned. 모든 컬럼 인덱스 비교는 이 순서 기준.
   const visibleColumns = React.useMemo(() => {
+    // 방어: HMR/조기 렌더 등으로 columnVisibility가 일시적으로 비어있어도 크래시 X.
+    const visibility = columnVisibility ?? {};
     const byId = new Map(columns.map((c) => [c.id, c]));
     const ordered = columnOrder
       .map((id) => byId.get(id))
       .filter((c): c is GridColumn<TRow> => c !== undefined);
-    const filtered = ordered.filter((c) => columnVisibility[c.id] !== false);
+    const filtered = ordered.filter((c) => visibility[c.id] !== false);
     const left = filtered.filter((c) => c.pin === 'left');
     const middle = filtered.filter((c) => !c.pin);
     const right = filtered.filter((c) => c.pin === 'right');
@@ -863,10 +871,13 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
     if (!viewKey) return;
     const loaded = loadGridView(viewKey);
     if (!loaded) return;
-    if (loaded.sortStates) setSortStates(loaded.sortStates);
-    if (loaded.columnWidths) setColumnWidths(loaded.columnWidths);
-    if (loaded.columnVisibility) setInternalVisibility(loaded.columnVisibility);
-    if (loaded.columnOrder) setColumnOrder(loaded.columnOrder);
+    // 타입 가드 — localStorage가 손상돼도 안전.
+    if (Array.isArray(loaded.sortStates)) setSortStates(loaded.sortStates);
+    if (loaded.columnWidths && typeof loaded.columnWidths === 'object')
+      setColumnWidths(loaded.columnWidths);
+    if (loaded.columnVisibility && typeof loaded.columnVisibility === 'object')
+      setInternalVisibility(loaded.columnVisibility);
+    if (Array.isArray(loaded.columnOrder)) setColumnOrder(loaded.columnOrder);
     // load는 mount 시 1회만. viewKey 변경에는 미반응 (그 경우 컴포넌트 재마운트가 일반적).
   }, []); // eslint-disable-line
   // 변경 감지 → save + onViewChange 콜백.
@@ -983,6 +994,16 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
   const someSelected =
     selectable && !allSelected && visibleFlatRows.some((fr) => state.selectedIds.has(fr.id));
   const colSpan = visibleColumns.length + (selectable ? 1 : 0);
+  // 테이블 최소 폭 — 컬럼 명시 폭 + 리사이즈된 폭 + 체크박스 컬럼(40)을 합산.
+  //   table-layout: auto는 column hint를 강제하지 않으므로 직접 min-width를 줘야
+  //   합계가 컨테이너 폭보다 클 때 정확히 자연 폭으로 늘어남(가로 스크롤 + sticky pin 동작).
+  const tableMinWidth = visibleColumns.reduce(
+    (sum, c) => {
+      const w = columnWidths[c.id] ?? (typeof c.width === 'number' ? c.width : 0);
+      return sum + w;
+    },
+    selectable ? 40 : 0,
+  );
 
   return (
     <div
@@ -990,7 +1011,9 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
       tabIndex={cellSelection !== 'none' ? 0 : undefined}
       onKeyDown={handleContainerKeyDown}
       className={cn(
-        'flex flex-col border border-border-default outline-none',
+        // 그리드 컨테이너 외곽선 제거 — @baneung-pack/ui의 전역 :focus-visible 룰을 !important로 덮어씀.
+        //   포커스 시각화는 active 셀의 outline-ring으로만 표현 (전체 그리드 선택돼 보이는 문제 차단).
+        'flex flex-col border border-border-default focus-visible:outline-none!',
         // autoSize 시 부모 컨테이너에 꽉 맞춤 (caller 측이 부모 div에 명시적 height을 줘야 함)
         autoSize && 'h-full w-full',
         className,
@@ -1040,7 +1063,12 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
         aria-label="데이터 그리드"
       >
         <table
+          // w-full: 컨테이너 ≥ 컬럼 합계면 100%로 채움 (오른쪽 여백 없음).
+          // style.minWidth (컬럼 폭 합계): 컬럼 합계 > 컨테이너면 자연 폭으로 늘어남
+          //   → 가로 스크롤 트리거 + sticky pin이 정확히 동작.
+          //   둘 다 두면 max(width, min-width) 규칙이 적용돼 두 케이스 모두 OK.
           className="w-full border-collapse text-sm"
+          style={{ minWidth: tableMinWidth || undefined }}
           aria-rowcount={allFlatRows.length}
           aria-colcount={colSpan}
         >
@@ -1089,9 +1117,6 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
                       (!col.align || col.align === 'left') && 'text-left',
                       // pin 컬럼은 불투명 배경 필수 (sticky 시 뒤 콘텐츠가 비치지 않게)
                       pin && 'bg-surface',
-                      // pin 블록 안쪽 경계에 강한 선 (시각적 구분)
-                      pin?.left !== undefined && pin.isEdge && 'border-r border-border-strong',
-                      pin?.right !== undefined && pin.isEdge && 'border-l border-border-strong',
                     )}
                     style={{
                       width: effectiveWidth,
@@ -1102,6 +1127,14 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
                       left: pin?.left,
                       right: pin?.right,
                       zIndex: pin ? 11 : undefined,
+                      // pin 블록 안쪽 경계 — box-shadow로 표현 (border는 border-collapse와 충돌해 깜빡임).
+                      //   shadow는 border-collapse에 영향받지 않아 sticky 스크롤에서도 안정적.
+                      boxShadow:
+                        pin?.left !== undefined && pin.isEdge
+                          ? 'inset -1px 0 0 var(--color-border-default), 2px 0 4px -2px rgba(0,0,0,0.08)'
+                          : pin?.right !== undefined && pin.isEdge
+                            ? 'inset 1px 0 0 var(--color-border-default), -2px 0 4px -2px rgba(0,0,0,0.08)'
+                            : undefined,
                     }}
                     onClick={col.sortable ? (e) => toggleSort(col.id, e.shiftKey) : undefined}
                     // 컬럼 드래그&드롭 (reorderable) — 리사이즈 핸들 영역 제외.
@@ -1282,7 +1315,7 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
                         col.align === 'right' && 'text-right',
                         col.align === 'center' && 'text-center',
                         (!col.align || col.align === 'left') && 'text-left',
-                        pin && 'bg-background',
+                        pin && 'bg-canvas',
                       )}
                       style={{
                         position: pin ? 'sticky' : undefined,
@@ -1674,10 +1707,9 @@ function GridRow<TRow>({
               align === 'right' && 'text-right',
               align === 'center' && 'text-center',
               (!align || align === 'left') && 'text-left',
-              // pin: 불투명 배경 필수 (sticky 시 뒤 행이 비치지 않게) + 안쪽 경계선
-              pin && 'bg-background',
-              pin?.left !== undefined && pin.isEdge && 'border-r border-border-strong',
-              pin?.right !== undefined && pin.isEdge && 'border-l border-border-strong',
+              // pin: 불투명 배경 필수 (sticky 시 뒤 행이 비치지 않게).
+              //   bg-canvas는 디자인 토큰의 캔버스(흰색/배경).
+              pin && 'bg-canvas',
               userCellClass,
             )}
             style={{
@@ -1686,6 +1718,13 @@ function GridRow<TRow>({
               left: pin?.left,
               right: pin?.right,
               zIndex: pin ? 2 : undefined,
+              // pin 블록 안쪽 경계 — box-shadow로 표현 (border-collapse와 충돌하지 않음).
+              boxShadow:
+                pin?.left !== undefined && pin.isEdge
+                  ? 'inset -1px 0 0 var(--color-border-default), 2px 0 4px -2px rgba(0,0,0,0.08)'
+                  : pin?.right !== undefined && pin.isEdge
+                    ? 'inset 1px 0 0 var(--color-border-default), -2px 0 4px -2px rgba(0,0,0,0.08)'
+                    : undefined,
               ...userCellStyle,
             }}
           >
