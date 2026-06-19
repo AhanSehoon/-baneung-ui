@@ -13,6 +13,8 @@ interface NavItem {
   /** 페이지 link. 없으면 toggle-only(자식 메뉴 펼침/접힘 버튼)로 동작. */
   href?: string;
   label: string;
+  /** 옵션 — label 아래 작은 글씨로 표시할 패키지명(긴 이름의 줄바꿈 깨짐 방지). */
+  pkg?: string;
   /** 옵션 — 이 항목 아래 들여쓰기로 표시할 하위 메뉴. */
   children?: { href: string; label: string }[];
 }
@@ -32,7 +34,8 @@ const navSections: { label: string; items: NavItem[] }[] = [
     items: [
       {
         // href 없음 → toggle-only. 클릭 시 자식 메뉴 펼침/접힘.
-        label: 'Grid (@baneung-pack/grid)',
+        label: 'Grid',
+        pkg: '@baneung-pack/grid',
         children: [
           { href: '/grid/install', label: 'Install' },
           { href: '/grid/props', label: 'Props' },
@@ -58,6 +61,21 @@ const navSections: { label: string; items: NavItem[] }[] = [
           { href: '/grid/excel', label: 'Excel 내보내기 · 클립보드' },
           { href: '/grid/save-view', label: '설정 자동 저장' },
           { href: '/grid/all-features', label: '관리자 화면 통합 예제' },
+        ],
+      },
+      {
+        // href 없음 → toggle-only. 클릭 시 자식 메뉴 펼침/접힘.
+        label: 'Editor',
+        pkg: '@baneung-pack/editor',
+        children: [
+          { href: '/editor/install', label: 'Install' },
+          { href: '/editor/props', label: 'Props' },
+          { href: '/editor/basic', label: '기본 사용' },
+          { href: '/editor/controlled', label: '제어 · HTML 출력' },
+          { href: '/editor/image', label: '이미지 붙여넣기 · 드롭' },
+          { href: '/editor/custom-toolbar', label: '커스텀 툴바' },
+          { href: '/editor/readonly', label: '읽기 전용' },
+          { href: '/editor/full', label: '전체 기능 · ref API' },
         ],
       },
     ],
@@ -175,9 +193,17 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
                             type="button"
                             aria-expanded={isExpanded}
                             onClick={() => toggleLabel(item.label)}
-                            className="flex w-full items-center justify-between"
+                            className="flex w-full items-center justify-between gap-1"
                           >
-                            <span>{item.label}</span>
+                            {/* 한 줄에 모두 들어가도록 작은 글씨 + 줄바꿈 금지 */}
+                            <span className="whitespace-nowrap text-xs">
+                              {item.label}
+                              {item.pkg && (
+                                <span className="ml-1 font-normal text-foreground-muted">
+                                  ({item.pkg})
+                                </span>
+                              )}
+                            </span>
                             <svg
                               aria-hidden="true"
                               viewBox="0 0 16 16"

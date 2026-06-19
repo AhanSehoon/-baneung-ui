@@ -13,6 +13,7 @@ import type { Metadata } from 'next';
 // grid styles.css도 같은 @layer baneung을 사용하므로 ui 다음에 import해 layer 머지.
 import '@baneung-pack/ui/styles.css';
 import '@baneung-pack/grid/styles.css';
+import '@baneung-pack/editor/styles.css';
 import './globals.css';
 
 export const metadata: Metadata = {

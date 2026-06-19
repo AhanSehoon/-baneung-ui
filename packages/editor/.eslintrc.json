@@ -1,0 +1,3 @@
+{
+  "extends": ["@baneung-pack/eslint-config/react"]
+}

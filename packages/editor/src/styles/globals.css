@@ -1,0 +1,196 @@
+/*
+ * @baneung-pack/editor — 글로벌 스타일 진입점.
+ *
+ * Tailwind v4 CLI가 이 파일을 입력으로 dist/styles.css를 생성한다.
+ * src/components/** 의 클래스 사용을 스캔해 utility를 트리쉐이크.
+ *
+ * # CSS 격리 (Cascade Layers)
+ * @baneung-pack/ui·grid와 동일하게 모든 라이브러리 스타일을 `@layer baneung`에 격리.
+ * 같은 layer를 공유하므로 ui/grid/editor를 함께 임포트해도 layer 정의가 자연스럽게 머지된다.
+ *
+ * # 토큰
+ * @baneung-pack/tokens의 CSS 변수를 @theme inline으로 Tailwind utility에 매핑.
+ */
+@import 'tailwindcss' layer(baneung);
+@import '@baneung-pack/tokens/css' layer(baneung);
+
+@theme inline {
+  /* 배경 */
+  --color-canvas: var(--color-bg-canvas);
+  --color-surface: var(--color-bg-surface);
+  --color-surface-strong: var(--color-bg-surface-strong);
+
+  /* 텍스트 */
+  --color-foreground: var(--color-text-primary);
+  --color-foreground-muted: var(--color-text-secondary);
+  --color-foreground-subtle: var(--color-text-tertiary);
+  --color-foreground-inverse: var(--color-text-inverse);
+
+  /* 보더 */
+  --color-border-subtle: var(--color-border-subtle);
+  --color-border-default: var(--color-border-default);
+
+  /* 포커스 링 */
+  --color-ring: var(--color-focus-ring);
+
+  /* 상태 */
+  --color-success: var(--color-status-success);
+  --color-warning: var(--color-status-warning);
+  --color-danger: var(--color-status-danger);
+  --color-info: var(--color-status-info);
+
+  /* 폰트 */
+  --font-sans: var(--typography-font-family-sans);
+}
+
+/*
+ * 에디터 본문(contentEditable)의 시맨틱 요소 스타일.
+ *
+ * WYSIWYG 영역은 사용자가 입력한 raw HTML(h1, ul, blockquote, img ...)을 그대로
+ * 렌더하므로 Tailwind utility만으로는 커버되지 않는다. @layer baneung 안에서
+ * `.baneung-editor-content` 스코프로 기본 타이포/요소 스타일을 정의한다.
+ *
+ * 반응형: 이미지·표·iframe은 max-width:100%로 부모를 넘지 않게 한다.
+ */
+@layer baneung {
+  .baneung-editor-content {
+    color: var(--color-text-primary);
+    font-family: var(--typography-font-family-sans);
+    line-height: 1.7;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  .baneung-editor-content:focus {
+    outline: none;
+  }
+
+  /* placeholder — 비어 있을 때만 표시 (data-empty 속성으로 토글) */
+  .baneung-editor-content[data-empty='true']::before {
+    content: attr(data-placeholder);
+    color: var(--color-text-tertiary);
+    pointer-events: none;
+    display: block;
+  }
+
+  .baneung-editor-content > *:first-child {
+    margin-top: 0;
+  }
+  .baneung-editor-content > *:last-child {
+    margin-bottom: 0;
+  }
+
+  .baneung-editor-content h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.25;
+    margin: 1.2em 0 0.6em;
+  }
+  .baneung-editor-content h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    line-height: 1.3;
+    margin: 1.1em 0 0.5em;
+  }
+  .baneung-editor-content h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    line-height: 1.35;
+    margin: 1em 0 0.5em;
+  }
+  .baneung-editor-content p {
+    margin: 0.5em 0;
+  }
+
+  .baneung-editor-content ul,
+  .baneung-editor-content ol {
+    margin: 0.5em 0;
+    padding-left: 1.6em;
+  }
+  .baneung-editor-content ul {
+    list-style: disc;
+  }
+  .baneung-editor-content ol {
+    list-style: decimal;
+  }
+  .baneung-editor-content li {
+    margin: 0.2em 0;
+  }
+
+  .baneung-editor-content a {
+    color: var(--color-status-info, #2563eb);
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  .baneung-editor-content blockquote {
+    margin: 0.8em 0;
+    padding: 0.4em 1em;
+    border-left: 3px solid var(--color-border-default);
+    color: var(--color-text-secondary);
+  }
+
+  .baneung-editor-content pre {
+    margin: 0.8em 0;
+    padding: 0.8em 1em;
+    background: var(--color-bg-surface-strong);
+    border: 1px solid var(--color-border-subtle);
+    overflow-x: auto;
+    font-family: var(--typography-font-family-mono, ui-monospace, monospace);
+    font-size: 0.875em;
+    line-height: 1.5;
+  }
+  .baneung-editor-content code {
+    font-family: var(--typography-font-family-mono, ui-monospace, monospace);
+    font-size: 0.875em;
+    background: var(--color-bg-surface-strong);
+    padding: 0.1em 0.3em;
+  }
+  .baneung-editor-content pre code {
+    background: transparent;
+    padding: 0;
+  }
+
+  .baneung-editor-content hr {
+    border: none;
+    border-top: 1px solid var(--color-border-default);
+    margin: 1.2em 0;
+  }
+
+  /* 반응형 미디어 — 부모 폭을 넘지 않도록 */
+  .baneung-editor-content img,
+  .baneung-editor-content video,
+  .baneung-editor-content iframe {
+    max-width: 100%;
+    height: auto;
+  }
+  .baneung-editor-content img {
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+  /* 선택된 이미지(클릭) 시각 표시 */
+  .baneung-editor-content img.baneung-editor-img--selected {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 1px;
+  }
+
+  /* 표 */
+  .baneung-editor-content table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 0.8em 0;
+    display: block;
+    overflow-x: auto;
+  }
+  .baneung-editor-content th,
+  .baneung-editor-content td {
+    border: 1px solid var(--color-border-default);
+    padding: 0.4em 0.6em;
+    text-align: left;
+  }
+  .baneung-editor-content th {
+    background: var(--color-bg-surface);
+    font-weight: 600;
+  }
+}
