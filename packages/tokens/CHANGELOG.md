@@ -30,7 +30,7 @@
   컴포넌트 스타일을 덮어쓰는 문제 해결. 자세한 사용법은 README의
   "CSS 격리 (Cascade Layers)" 섹션 참고.
 
-  README에 데모 사이트 링크 추가: https://baneung-ui-docs-op7v.vercel.app
+  README에 데모 사이트 링크 추가: https://ui.baneung.com
 
 ## 1.0.1
 

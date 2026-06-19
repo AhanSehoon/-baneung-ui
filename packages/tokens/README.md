@@ -5,7 +5,7 @@
 [![npm](https://img.shields.io/npm/v/@baneung-pack/tokens.svg)](https://www.npmjs.com/package/@baneung-pack/tokens)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://github.com/BaneungCop/-baneung-ui/blob/master/LICENSE)
 
-**📖 데모 / 컴포넌트 카탈로그**: https://baneung-ui-docs-op7v.vercel.app
+**📖 데모 / 컴포넌트 카탈로그**: https://ui.baneung.com
 
 바능 디자인 시스템의 **단일 진실 공급원**(SSOT) 토큰 패키지. 같은 값을 CSS 변수, JSON, TypeScript 객체 세 형태로 동시에 제공해서 어떤 환경에서든 일관된 디자인을 보장합니다.
 

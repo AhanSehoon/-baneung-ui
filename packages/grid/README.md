@@ -5,7 +5,7 @@
 [![npm](https://img.shields.io/npm/v/@baneung-pack/grid.svg)](https://www.npmjs.com/package/@baneung-pack/grid)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://github.com/BaneungCop/-baneung-ui/blob/master/LICENSE)
 
-**📖 데모 / 컴포넌트 카탈로그**: https://baneung-ui-docs-op7v.vercel.app
+**📖 데모 / 컴포넌트 카탈로그**: https://ui.baneung.com
 
 `@baneung-pack/ui`와 같은 디자인 토큰을 공유하는 데이터 그리드 컴포넌트입니다. 행 수가 적을 땐 일반 `<table>`, 많을 땐 `virtualized` props 한 줄로 가상화 모드로 전환합니다.
 

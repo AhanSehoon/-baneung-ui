@@ -5,7 +5,7 @@
 [![npm](https://img.shields.io/npm/v/@baneung-pack/ui.svg)](https://www.npmjs.com/package/@baneung-pack/ui)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://github.com/BaneungCop/-baneung-ui/blob/master/LICENSE)
 
-**📖 데모 / 컴포넌트 카탈로그**: https://baneung-ui-docs-op7v.vercel.app
+**📖 데모 / 컴포넌트 카탈로그**: https://ui.baneung.com
 
 Radix UI primitives 위에 바능 브랜드(각진 디자인, 절제된 컬러, 강한 타이포 위계)를 입힌 React 컴포넌트 라이브러리. **WCAG 2.1 AA 접근성 협상 불가**.
 
