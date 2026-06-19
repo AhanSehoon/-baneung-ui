@@ -1478,7 +1478,7 @@ function GridContextMenuPopover<TRow>({
       role="menu"
       aria-label="셀 컨텍스트 메뉴"
       style={{ position: 'fixed', left: x, top: y, zIndex: 50 }}
-      className="min-w-[180px] border border-border-default bg-background py-1 shadow-md"
+      className="min-w-[180px] border border-border-default bg-canvas py-1 shadow-md"
     >
       {items.map((item, i) => {
         if (item.separator) {
@@ -1589,7 +1589,7 @@ function ColumnVisibilityMenu<TRow>({
       ref={ref}
       role="dialog"
       aria-label="컬럼 표시 설정"
-      className="absolute right-2 top-full z-20 mt-1 min-w-[180px] border border-border-default bg-background py-1 shadow-md"
+      className="absolute right-2 top-full z-20 mt-1 min-w-[180px] border border-border-default bg-canvas py-1 shadow-md"
     >
       {hideableCols.map((c) => {
         const visible = visibility[c.id] !== false;

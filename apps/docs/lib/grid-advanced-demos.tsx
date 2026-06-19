@@ -29,6 +29,10 @@ interface Order {
   category: '전자제품' | '의류' | '식품';
   qty: number;
   price: number;
+  discount: number;
+  payment: '카드' | '계좌이체' | '간편결제';
+  shipping: string;
+  memo: string;
   status: '대기' | '배송중' | '완료' | '취소';
   date: string;
 }
@@ -41,6 +45,10 @@ const sampleOrders: Order[] = [
     category: '전자제품',
     qty: 1,
     price: 1450000,
+    discount: 50000,
+    payment: '카드',
+    shipping: '서울 강남구 테헤란로 123',
+    memo: '문 앞에 놓아주세요',
     status: '완료',
     date: '2026-06-01',
   },
@@ -51,6 +59,10 @@ const sampleOrders: Order[] = [
     category: '의류',
     qty: 2,
     price: 89000,
+    discount: 0,
+    payment: '간편결제',
+    shipping: '경기 성남시 분당구 판교로 45',
+    memo: '',
     status: '배송중',
     date: '2026-06-03',
   },
@@ -61,6 +73,10 @@ const sampleOrders: Order[] = [
     category: '전자제품',
     qty: 1,
     price: 320000,
+    discount: 30000,
+    payment: '카드',
+    shipping: '부산 해운대구 우동 555',
+    memo: '경비실에 맡겨주세요',
     status: '완료',
     date: '2026-06-05',
   },
@@ -71,6 +87,10 @@ const sampleOrders: Order[] = [
     category: '식품',
     qty: 3,
     price: 45000,
+    discount: 5000,
+    payment: '계좌이체',
+    shipping: '대구 수성구 동대구로 88',
+    memo: '',
     status: '대기',
     date: '2026-06-10',
   },
@@ -81,6 +101,10 @@ const sampleOrders: Order[] = [
     category: '의류',
     qty: 1,
     price: 79000,
+    discount: 0,
+    payment: '간편결제',
+    shipping: '인천 연수구 컨벤시아대로 12',
+    memo: '교환 요청 대기 중',
     status: '취소',
     date: '2026-06-12',
   },
@@ -91,6 +115,10 @@ const sampleOrders: Order[] = [
     category: '전자제품',
     qty: 2,
     price: 359000,
+    discount: 20000,
+    payment: '카드',
+    shipping: '광주 서구 상무대로 77',
+    memo: '',
     status: '완료',
     date: '2026-06-14',
   },
@@ -101,6 +129,10 @@ const sampleOrders: Order[] = [
     category: '식품',
     qty: 1,
     price: 120000,
+    discount: 10000,
+    payment: '계좌이체',
+    shipping: '대전 유성구 대학로 99',
+    memo: '신선식품 — 빠른 배송 부탁',
     status: '배송중',
     date: '2026-06-15',
   },
@@ -111,6 +143,10 @@ const sampleOrders: Order[] = [
     category: '전자제품',
     qty: 1,
     price: 280000,
+    discount: 0,
+    payment: '간편결제',
+    shipping: '서울 마포구 월드컵북로 222',
+    memo: '',
     status: '완료',
     date: '2026-06-16',
   },
@@ -219,23 +255,34 @@ export function ColumnVisibilityDemo() {
 const pinnedColumns: GridColumn<Order>[] = [
   { id: 'id', header: '주문번호', accessor: 'id', width: 90, align: 'right', pin: 'left' },
   { id: 'customer', header: '고객명', accessor: 'customer', width: 100, pin: 'left' },
-  { id: 'product', header: '상품', accessor: 'product', width: 200 },
-  { id: 'category', header: '카테고리', accessor: 'category', width: 120 },
-  { id: 'qty', header: '수량', accessor: 'qty', width: 80, align: 'right' },
+  { id: 'product', header: '상품', accessor: 'product', width: 180 },
+  { id: 'category', header: '카테고리', accessor: 'category', width: 100 },
+  { id: 'qty', header: '수량', accessor: 'qty', width: 70, align: 'right' },
   {
     id: 'price',
     header: '가격',
     accessor: 'price',
-    width: 130,
+    width: 120,
     align: 'right',
     renderer: (v) => `${(v as number).toLocaleString()}원`,
   },
-  { id: 'date', header: '주문일', accessor: 'date', width: 130 },
+  {
+    id: 'discount',
+    header: '할인',
+    accessor: 'discount',
+    width: 90,
+    align: 'right',
+    renderer: (v) => ((v as number) > 0 ? `-${(v as number).toLocaleString()}원` : '-'),
+  },
+  { id: 'payment', header: '결제수단', accessor: 'payment', width: 100 },
+  { id: 'shipping', header: '배송지', accessor: 'shipping', width: 240 },
+  { id: 'memo', header: '메모', accessor: 'memo', width: 180 },
+  { id: 'date', header: '주문일', accessor: 'date', width: 110 },
   {
     id: 'status',
     header: '상태',
     accessor: 'status',
-    width: 100,
+    width: 90,
     pin: 'right',
     renderer: (v) => (
       <Badge variant={statusVariant[v as Order['status']]}>{v as React.ReactNode}</Badge>
@@ -247,11 +294,10 @@ export function PinnedColumnsDemo() {
   return (
     <div className="flex flex-col gap-3">
       <Muted className="text-xs">
-        💡 가로 스크롤 시 좌측 (주문번호·고객명) + 우측 (상태) 컬럼 고정. 안쪽 경계에 강한 선 표시.
+        💡 가로 스크롤 시 좌측 (주문번호·고객명) + 우측 (상태) 컬럼 고정. 안쪽 경계에 옅은 그림자.
       </Muted>
-      <div className="w-full max-w-2xl overflow-hidden border border-border-default">
-        <Grid columns={pinnedColumns} data={sampleOrders} getRowId={(r) => r.id} />
-      </div>
+      {/* 그리드는 부모 폭을 100% 사용. 컬럼 합계 폭이 더 크면 내부 가로 스크롤 활성. */}
+      <Grid columns={pinnedColumns} data={sampleOrders} getRowId={(r) => r.id} />
     </div>
   );
 }
@@ -269,7 +315,7 @@ const aggregateColumns: GridColumn<Order>[] = [
     id: 'price',
     header: '가격',
     accessor: 'price',
-    width: 130,
+    width: 220,
     align: 'right',
     renderer: (v) => `${(v as number).toLocaleString()}원`,
     aggregate: (rows: Order[]) => {

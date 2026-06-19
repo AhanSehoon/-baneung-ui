@@ -1,5 +1,45 @@
 # @baneung-pack/grid
 
+## 0.9.0
+
+### Minor Changes
+
+- 대규모 기능 추가 — 관리자 화면 / 대용량 / Excel 환경 핵심 기능.
+
+  # 새 기능
+
+  ## Excel 통합
+  - `exportXlsx` ref API — exceljs 동적 로드 (peer-optional, 번들 미포함)
+  - `clipboard` prop — Ctrl+C/V로 Excel과 셀 범위 호환 (TSV 직렬화)
+
+  ## 검색 · 정렬 · 필터
+  - `quickFilter` prop — 모든 visible 컬럼 부분 일치 (case-insensitive)
+  - 다중 컬럼 정렬 — Shift+클릭으로 2차/3차 정렬, 헤더에 순서 번호 표시
+
+  ## 컬럼 제어
+  - `resizable` + `onColumnResize` — 헤더 우측 드래그로 폭 조절
+  - `column.pin: 'left' | 'right'` — 컬럼 좌/우 고정 (sticky)
+  - `reorderable` + `onColumnReorder` — 헤더 드래그로 순서 변경 (pin 그룹 경계 유지)
+  - `showColumnMenu` + `column.hidden`/`hideable` — 컬럼 표시/숨김 UI
+
+  ## 합계 · 시각화
+  - `showFooter` + `column.aggregate` — sum/avg/count/min/max/함수 집계 푸터
+  - `column.cellStyle` / `column.cellClassName` — 값 기준 조건부 셀 스타일
+
+  ## 키보드 · 메뉴
+  - 키보드 네비게이션 — 화살표/Tab/Enter/Home·End/Ctrl+Home·End로 셀 이동
+  - `contextMenu` — 우클릭 메뉴 (기본 메뉴 또는 함수형 커스텀)
+
+  ## 영속화
+  - `viewKey` — 정렬/폭/표시/순서를 localStorage에 자동 저장·복원
+  - `onViewChange` 콜백 + ref API: `getView()` / `setView()` / `clearView()`
+
+  # 부수 수정
+  - `editCell` stale closure 버그 fix — 같은 행 여러 컬럼 동시 입력 정확
+  - 가로 스크롤 표 폭 계산 정확화 (table-layout auto 회피)
+  - pin 컬럼 sticky 시 배경 투명 / 경계선 깜빡임 해결 (box-shadow 사용)
+  - 그리드 컨테이너 포커스 시 전역 :focus-visible 외곽선 차단
+
 ## 0.8.4
 
 ### Patch Changes

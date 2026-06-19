@@ -200,9 +200,30 @@ const tokensHistory: PackageHistory = {
 
 const gridHistory: PackageHistory = {
   pkg: '@baneung-pack/grid',
-  current: '0.8.4',
+  current: '0.9.0',
   npmUrl: 'https://www.npmjs.com/package/@baneung-pack/grid',
   entries: [
+    {
+      version: '0.9.0',
+      type: 'minor',
+      summary: '관리자 화면 · 대용량 · Excel 환경 핵심 기능 대규모 추가',
+      details: [
+        'XLSX 내보내기 (exportXlsx ref API) — exceljs 동적 로드, 번들 미포함',
+        'Excel 호환 Ctrl+C/V 클립보드 (clipboard prop, TSV 직렬화)',
+        '빠른 검색 (quickFilter) — 모든 visible 컬럼 부분 일치',
+        '다중 컬럼 정렬 (Shift+클릭) + 헤더 순서 번호 표시',
+        '컬럼 폭 드래그 조절 (resizable + onColumnResize)',
+        '컬럼 고정 좌/우 (column.pin) — 가로 스크롤 시 sticky',
+        '컬럼 순서 변경 (reorderable) — 헤더 drag&drop, pin 경계 유지',
+        '컬럼 표시/숨김 (showColumnMenu + columnVisibility)',
+        '합계 행 (showFooter + column.aggregate) — sum/avg/count/min/max/함수',
+        '조건부 셀 스타일 (column.cellStyle / cellClassName)',
+        '키보드 네비게이션 — 화살표/Tab/Enter/Home·End/Ctrl+Home·End',
+        '우클릭 컨텍스트 메뉴 (contextMenu) — 기본 또는 함수형 커스텀',
+        '설정 자동 저장 (viewKey) — 정렬/폭/표시/순서 localStorage 영속화',
+        'editCell stale closure 버그 fix (paste 같은 다중 컬럼 동시 입력 정확)',
+      ],
+    },
     {
       version: '0.8.4',
       type: 'patch',
