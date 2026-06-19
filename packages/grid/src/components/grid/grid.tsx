@@ -16,10 +16,19 @@ import {
 } from './sort-filter';
 import { collectExpandableIds, flattenTree, type FlatRow } from './tree-utils';
 import { useGridState } from './use-grid-state';
+import { clearGridView, loadGridView, saveGridView } from './view';
 import { exportXlsx as exportXlsxHelper } from './xlsx';
 import { cn } from '../../lib/cn';
 
-import type { GridColumn, GridHandle, GridProps, GridSortState } from './types';
+import type {
+  GridColumn,
+  GridContextMenuContext,
+  GridContextMenuItem,
+  GridHandle,
+  GridProps,
+  GridSortState,
+  GridView,
+} from './types';
 
 type RowId = string | number;
 
@@ -154,10 +163,15 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
     quickFilter,
     resizable = false,
     onColumnResize,
+    reorderable = false,
+    onColumnReorder,
     columnVisibility: visibilityProp,
     onColumnVisibilityChange,
     showColumnMenu = false,
     showFooter = false,
+    contextMenu,
+    viewKey,
+    onViewChange,
     className,
     ...props
   }: GridProps<TRow>,
@@ -278,15 +292,57 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
     },
     [columnVisibility, setVisibility],
   );
-  // 화면에 실제 렌더할 컬럼 — visibility=false 제외 + pin 기준 재정렬.
+  // 1d-3. 컬럼 순서 (drag&drop) — columnId 배열로 관리. columns props가 바뀌면 merge.
+  const [columnOrder, setColumnOrder] = React.useState<string[]>(() => columns.map((c) => c.id));
+  /**
+   * 컬럼 순서 변경 적용 — source를 target 위치로 이동.
+   * 같은 pin 그룹 안에서만 이동 가능 (서로 다른 pin이면 swap 안 됨 — pin 경계 유지).
+   */
+  const reorderColumn = React.useCallback(
+    (sourceId: string, targetId: string) => {
+      if (sourceId === targetId) return;
+      const src = columns.find((c) => c.id === sourceId);
+      const tgt = columns.find((c) => c.id === targetId);
+      // 다른 pin 그룹이면 이동 차단
+      if (!src || !tgt || (src.pin ?? null) !== (tgt.pin ?? null)) return;
+      setColumnOrder((prev) => {
+        const fromIdx = prev.indexOf(sourceId);
+        const toIdx = prev.indexOf(targetId);
+        if (fromIdx < 0 || toIdx < 0) return prev;
+        const next = [...prev];
+        next.splice(fromIdx, 1);
+        next.splice(toIdx, 0, sourceId);
+        onColumnReorder?.(next);
+        return next;
+      });
+    },
+    [columns, onColumnReorder],
+  );
+  React.useEffect(() => {
+    // 새 columns prop과 sync — 기존 순서는 보존, 신규 컬럼은 끝에 append, 사라진 컬럼은 제거.
+    setColumnOrder((prev) => {
+      const knownPrev = new Set(prev);
+      const newIds = columns.map((c) => c.id);
+      const newSet = new Set(newIds);
+      const filtered = prev.filter((id) => newSet.has(id));
+      const appended = newIds.filter((id) => !knownPrev.has(id));
+      if (filtered.length === prev.length && appended.length === 0) return prev;
+      return [...filtered, ...appended];
+    });
+  }, [columns]);
+  // 화면에 실제 렌더할 컬럼 — drag 순서 적용 → visibility 필터 → pin 그룹 정렬.
   //   순서: left-pinned → unpinned → right-pinned. 모든 컬럼 인덱스 비교는 이 순서 기준.
   const visibleColumns = React.useMemo(() => {
-    const filtered = columns.filter((c) => columnVisibility[c.id] !== false);
+    const byId = new Map(columns.map((c) => [c.id, c]));
+    const ordered = columnOrder
+      .map((id) => byId.get(id))
+      .filter((c): c is GridColumn<TRow> => c !== undefined);
+    const filtered = ordered.filter((c) => columnVisibility[c.id] !== false);
     const left = filtered.filter((c) => c.pin === 'left');
     const middle = filtered.filter((c) => !c.pin);
     const right = filtered.filter((c) => c.pin === 'right');
     return [...left, ...middle, ...right];
-  }, [columns, columnVisibility]);
+  }, [columns, columnOrder, columnVisibility]);
   // 컬럼 메뉴 popover open/close
   const [columnMenuOpen, setColumnMenuOpen] = React.useState(false);
 
@@ -524,6 +580,25 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
       exportXlsx,
       getColumnVisibility: () => columnVisibility,
       toggleColumnVisibility,
+      getView: () => ({
+        sortStates,
+        columnWidths,
+        columnVisibility: internalVisibility,
+        columnOrder,
+      }),
+      setView: (view) => {
+        if (view.sortStates !== undefined) setSortStates(view.sortStates);
+        if (view.columnWidths !== undefined) setColumnWidths(view.columnWidths);
+        if (view.columnVisibility !== undefined) setInternalVisibility(view.columnVisibility);
+        if (view.columnOrder !== undefined) setColumnOrder(view.columnOrder);
+      },
+      clearView: () => {
+        setSortStates([]);
+        setColumnWidths({});
+        setInternalVisibility(initialVisibility);
+        setColumnOrder(columns.map((c) => c.id));
+        if (viewKey) clearGridView(viewKey);
+      },
     }),
     [
       state,
@@ -534,6 +609,13 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
       exportXlsx,
       columnVisibility,
       toggleColumnVisibility,
+      sortStates,
+      columnWidths,
+      internalVisibility,
+      columnOrder,
+      initialVisibility,
+      columns,
+      viewKey,
     ],
   );
 
@@ -644,6 +726,85 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
     await writeClipboard(tsv);
   }, [cellSelection, selectedCells, activeCell, visibleFlatRows, visibleColumns]);
 
+  // 10-c. 키보드 네비게이션 — 화살표/Tab/Enter/Home/End/Page로 active 셀 이동.
+  //   visibleColumns / visibleFlatRows 인덱스 기반. 경계 도달 시 stop (wrap X).
+  const navigateCell = React.useCallback(
+    (
+      dir:
+        | 'up'
+        | 'down'
+        | 'left'
+        | 'right'
+        | 'home'
+        | 'end'
+        | 'rowStart'
+        | 'rowEnd'
+        | 'gridStart'
+        | 'gridEnd',
+    ) => {
+      if (cellSelection === 'none') return;
+      // activeCell 없으면 첫 셀로
+      let rowIdx = activeCell ? visibleFlatRows.findIndex((fr) => fr.id === activeCell.rowId) : -1;
+      let colIdx = activeCell ? visibleColumns.findIndex((c) => c.id === activeCell.columnId) : -1;
+      if (rowIdx < 0) rowIdx = 0;
+      if (colIdx < 0) colIdx = 0;
+      const lastRow = visibleFlatRows.length - 1;
+      const lastCol = visibleColumns.length - 1;
+      switch (dir) {
+        case 'up':
+          rowIdx = Math.max(0, rowIdx - 1);
+          break;
+        case 'down':
+          rowIdx = Math.min(lastRow, rowIdx + 1);
+          break;
+        case 'left':
+          colIdx = Math.max(0, colIdx - 1);
+          break;
+        case 'right':
+          colIdx = Math.min(lastCol, colIdx + 1);
+          break;
+        case 'home':
+          colIdx = 0;
+          break;
+        case 'end':
+          colIdx = lastCol;
+          break;
+        case 'rowStart':
+          colIdx = 0;
+          break;
+        case 'rowEnd':
+          colIdx = lastCol;
+          break;
+        case 'gridStart':
+          rowIdx = 0;
+          colIdx = 0;
+          break;
+        case 'gridEnd':
+          rowIdx = lastRow;
+          colIdx = lastCol;
+          break;
+      }
+      const flatRow = visibleFlatRows[rowIdx];
+      const col = visibleColumns[colIdx];
+      if (!flatRow || !col) return;
+      setActiveCell({ rowId: flatRow.id, columnId: col.id });
+      setSelectedCells(new Set([cellKey(flatRow.id, col.id)]));
+    },
+    [cellSelection, activeCell, visibleFlatRows, visibleColumns],
+  );
+
+  // active 셀이 바뀌면 스크롤 영역 안으로 자동 스크롤 (가상화 모드 포함).
+  React.useEffect(() => {
+    if (!activeCell || !scrollRef.current) return;
+    const scrollEl = scrollRef.current;
+    // aria-selected="true"인 셀을 찾아 scrollIntoView. nearest로 최소 이동.
+    // jsdom에는 scrollIntoView가 없을 수 있으므로 가드.
+    const cellEl = scrollEl.querySelector('td[aria-selected="true"]');
+    if (cellEl instanceof HTMLElement && typeof cellEl.scrollIntoView === 'function') {
+      cellEl.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }
+  }, [activeCell]);
+
   // 10-b. clipboard TSV → activeCell 위치부터 셀에 일괄 입력 (Ctrl+V).
   //   accessor가 string key인 컬럼만 적용 (함수 accessor는 set 불가 → 스킵).
   const pasteFromClipboard = React.useCallback(async (): Promise<void> => {
@@ -669,6 +830,56 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
       });
     });
   }, [cellSelection, activeCell, visibleFlatRows, visibleColumns, state]);
+
+  // 10-d. 컨텍스트 메뉴 — 우클릭 위치(x,y) + 셀 context 저장. 닫으면 null.
+  const [ctxMenuState, setCtxMenuState] = React.useState<{
+    x: number;
+    y: number;
+    ctx: GridContextMenuContext<TRow>;
+  } | null>(null);
+  /**
+   * 셀 우클릭 핸들러 — `contextMenu` prop이 설정돼 있을 때만 동작.
+   * 브라우저 기본 메뉴를 막고, 클릭한 셀 정보(rowId, columnId, row, selectedRowIds)를
+   * 캡처해 상태에 저장 → ContextMenuPopover가 렌더됨.
+   */
+  const handleCellContextMenu = React.useCallback(
+    (rowId: RowId, columnId: string, row: TRow, e: React.MouseEvent) => {
+      if (!contextMenu) return;
+      e.preventDefault();
+      const ctx: GridContextMenuContext<TRow> = {
+        rowId,
+        columnId,
+        row,
+        selectedRowIds: Array.from(state.selectedIds),
+      };
+      setCtxMenuState({ x: e.clientX, y: e.clientY, ctx });
+    },
+    [contextMenu, state.selectedIds],
+  );
+
+  // 10-e. View 영속화 — viewKey 지정 시 첫 마운트에 load, 이후 변경 시 자동 save.
+  //   초기 로드 완료 플래그 — 첫 save가 이전 load 직후 트리거되어 같은 값을 쓰는 것은 무해.
+  React.useEffect(() => {
+    if (!viewKey) return;
+    const loaded = loadGridView(viewKey);
+    if (!loaded) return;
+    if (loaded.sortStates) setSortStates(loaded.sortStates);
+    if (loaded.columnWidths) setColumnWidths(loaded.columnWidths);
+    if (loaded.columnVisibility) setInternalVisibility(loaded.columnVisibility);
+    if (loaded.columnOrder) setColumnOrder(loaded.columnOrder);
+    // load는 mount 시 1회만. viewKey 변경에는 미반응 (그 경우 컴포넌트 재마운트가 일반적).
+  }, []); // eslint-disable-line
+  // 변경 감지 → save + onViewChange 콜백.
+  React.useEffect(() => {
+    const view: GridView = {
+      sortStates,
+      columnWidths,
+      columnVisibility: internalVisibility,
+      columnOrder,
+    };
+    if (viewKey) saveGridView(viewKey, view);
+    onViewChange?.(view);
+  }, [viewKey, onViewChange, sortStates, columnWidths, internalVisibility, columnOrder]);
 
   // 10. 키 입력 핸들러 — Delete/Backspace, Ctrl+C, Ctrl+V를 한 곳에서 처리.
   const handleContainerKeyDown = React.useCallback(
@@ -710,6 +921,45 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
         if (inEditor) return;
         e.preventDefault();
         clearSelectedCells();
+        return;
+      }
+
+      // 키보드 네비게이션 — cellSelection !== 'none'이면 항상 활성.
+      //   편집 input 안에서는 입력 우선 (편집 input의 키 핸들러가 자체 처리).
+      if (cellSelection === 'none' || inEditor) return;
+      switch (e.key) {
+        case 'ArrowUp':
+          e.preventDefault();
+          navigateCell(e.ctrlKey || e.metaKey ? 'gridStart' : 'up');
+          return;
+        case 'ArrowDown':
+          e.preventDefault();
+          navigateCell(e.ctrlKey || e.metaKey ? 'gridEnd' : 'down');
+          return;
+        case 'ArrowLeft':
+          e.preventDefault();
+          navigateCell('left');
+          return;
+        case 'ArrowRight':
+          e.preventDefault();
+          navigateCell('right');
+          return;
+        case 'Tab':
+          e.preventDefault();
+          navigateCell(e.shiftKey ? 'left' : 'right');
+          return;
+        case 'Enter':
+          e.preventDefault();
+          navigateCell(e.shiftKey ? 'up' : 'down');
+          return;
+        case 'Home':
+          e.preventDefault();
+          navigateCell(e.ctrlKey || e.metaKey ? 'gridStart' : 'rowStart');
+          return;
+        case 'End':
+          e.preventDefault();
+          navigateCell(e.ctrlKey || e.metaKey ? 'gridEnd' : 'rowEnd');
+          return;
       }
     },
     [
@@ -719,6 +969,7 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
       copySelectedCells,
       pasteFromClipboard,
       clearSelectedCells,
+      navigateCell,
     ],
   );
 
@@ -736,7 +987,7 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
   return (
     <div
       ref={containerRef}
-      tabIndex={(clearOnDelete || clipboard) && cellSelection !== 'none' ? 0 : undefined}
+      tabIndex={cellSelection !== 'none' ? 0 : undefined}
       onKeyDown={handleContainerKeyDown}
       className={cn(
         'flex flex-col border border-border-default outline-none',
@@ -853,6 +1104,39 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
                       zIndex: pin ? 11 : undefined,
                     }}
                     onClick={col.sortable ? (e) => toggleSort(col.id, e.shiftKey) : undefined}
+                    // 컬럼 드래그&드롭 (reorderable) — 리사이즈 핸들 영역 제외.
+                    draggable={reorderable && col.draggable !== false}
+                    onDragStart={
+                      reorderable && col.draggable !== false
+                        ? (e) => {
+                            // 리사이즈 핸들에서 시작된 mousedown은 drag로 이어지지 않게 차단
+                            const target = e.target as HTMLElement;
+                            if (target.getAttribute('role') === 'separator') {
+                              e.preventDefault();
+                              return;
+                            }
+                            e.dataTransfer.setData('text/plain', col.id);
+                            e.dataTransfer.effectAllowed = 'move';
+                          }
+                        : undefined
+                    }
+                    onDragOver={
+                      reorderable
+                        ? (e) => {
+                            e.preventDefault();
+                            e.dataTransfer.dropEffect = 'move';
+                          }
+                        : undefined
+                    }
+                    onDrop={
+                      reorderable
+                        ? (e) => {
+                            e.preventDefault();
+                            const sourceId = e.dataTransfer.getData('text/plain');
+                            if (sourceId) reorderColumn(sourceId, col.id);
+                          }
+                        : undefined
+                    }
                   >
                     <span className="inline-flex items-center gap-1">
                       {col.header}
@@ -951,6 +1235,7 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
               onCellMouseEnter={handleCellMouseEnter}
               pinOffsets={pinOffsets}
               columnWidths={columnWidths}
+              onCellContextMenu={contextMenu ? handleCellContextMenu : undefined}
             />
           ) : (
             <tbody>
@@ -972,6 +1257,7 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
                   onCellMouseEnter={handleCellMouseEnter}
                   pinOffsets={pinOffsets}
                   columnWidths={columnWidths}
+                  onCellContextMenu={contextMenu ? handleCellContextMenu : undefined}
                 />
               ))}
             </tbody>
@@ -1025,6 +1311,33 @@ export const Grid = React.forwardRef(function GridInner<TRow = Record<string, un
       {pageSize > 0 && showPagination && (
         <GridPagination page={page} pageCount={pageCount} onPageChange={setPage} />
       )}
+
+      {ctxMenuState &&
+        (() => {
+          // 기본 메뉴 빌더 — exportXlsx는 async라 wrapper로 감쌈.
+          const defaultItems = buildDefaultContextMenuItems<TRow>({
+            hasClipboard: clipboard,
+            hasSelection: state.selectedIds.size > 0,
+            copy: () => void copySelectedCells(),
+            paste: () => void pasteFromClipboard(),
+            clearCells: () => clearSelectedCells(),
+            deleteRows: () => state.deleteSelected(),
+            exportCsv: () => exportCsv(),
+            exportXlsx: () => void exportXlsx(),
+          });
+          const items =
+            typeof contextMenu === 'function' ? contextMenu(ctxMenuState.ctx) : defaultItems;
+          if (items.length === 0) return null;
+          return (
+            <GridContextMenuPopover
+              x={ctxMenuState.x}
+              y={ctxMenuState.y}
+              items={items}
+              ctx={ctxMenuState.ctx}
+              onClose={() => setCtxMenuState(null)}
+            />
+          );
+        })()}
 
       {openFilter &&
         (() => {
@@ -1092,6 +1405,117 @@ function TreeAffix({ level, hasChildren, expanded, onToggle }: TreeAffixProps) {
 // ─────────────────────────────────────────────────────────────────────────────
 // 행 1개 렌더 (체크박스 + 컬럼 셀들)
 // ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * 컨텍스트 메뉴 popover — 우클릭 위치(x,y)에 절대 위치로 표시.
+ * 바깥 클릭 / Esc → 닫힘. 항목 클릭 시 onClick 실행 후 닫힘.
+ */
+function GridContextMenuPopover<TRow>({
+  x,
+  y,
+  items,
+  ctx,
+  onClose,
+}: {
+  x: number;
+  y: number;
+  items: GridContextMenuItem<TRow>[];
+  ctx: GridContextMenuContext<TRow>;
+  onClose: () => void;
+}) {
+  const ref = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    const onDown = (e: MouseEvent) => {
+      if (!ref.current?.contains(e.target as Node)) onClose();
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      ref={ref}
+      role="menu"
+      aria-label="셀 컨텍스트 메뉴"
+      style={{ position: 'fixed', left: x, top: y, zIndex: 50 }}
+      className="min-w-[180px] border border-border-default bg-background py-1 shadow-md"
+    >
+      {items.map((item, i) => {
+        if (item.separator) {
+          return (
+            <div key={`sep-${i}`} role="separator" className="my-1 border-t border-border-subtle" />
+          );
+        }
+        return (
+          <button
+            key={item.id ?? `item-${i}`}
+            type="button"
+            role="menuitem"
+            disabled={item.disabled}
+            onClick={() => {
+              if (item.disabled) return;
+              item.onClick?.(ctx);
+              onClose();
+            }}
+            className={cn(
+              'flex w-full items-center justify-between gap-4 px-3 py-1.5 text-left text-xs',
+              item.disabled
+                ? 'cursor-not-allowed text-foreground-subtle'
+                : 'cursor-pointer text-foreground hover:bg-surface',
+            )}
+          >
+            <span>{item.label}</span>
+            {item.shortcut && <span className="text-foreground-subtle">{item.shortcut}</span>}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * 기본 컨텍스트 메뉴 항목 빌더 — contextMenu=true일 때 사용.
+ * 활성/비활성은 호출자가 전달한 가용성 flag 기반.
+ */
+function buildDefaultContextMenuItems<TRow>(api: {
+  hasClipboard: boolean;
+  hasSelection: boolean;
+  copy: () => void;
+  paste: () => void;
+  clearCells: () => void;
+  deleteRows: () => void;
+  exportCsv: () => void;
+  exportXlsx: () => void;
+}): GridContextMenuItem<TRow>[] {
+  return [
+    { id: 'copy', label: '복사', shortcut: 'Ctrl+C', onClick: api.copy },
+    {
+      id: 'paste',
+      label: '붙여넣기',
+      shortcut: 'Ctrl+V',
+      onClick: api.paste,
+      disabled: !api.hasClipboard,
+    },
+    { id: 'clear', label: '셀 클리어', shortcut: 'Delete', onClick: api.clearCells },
+    { separator: true },
+    {
+      id: 'delete-row',
+      label: '선택 행 삭제',
+      onClick: api.deleteRows,
+      disabled: !api.hasSelection,
+    },
+    { separator: true },
+    { id: 'export-csv', label: 'CSV 내보내기', onClick: api.exportCsv },
+    { id: 'export-xlsx', label: 'Excel 내보내기', onClick: api.exportXlsx },
+  ];
+}
 
 /**
  * 컬럼 표시/숨김 popover — 우상단 ⚙️ 버튼에서 펼침.
@@ -1178,6 +1602,8 @@ interface GridRowProps<TRow> {
   pinOffsets?: Record<string, { left?: number; right?: number; isEdge?: boolean }>;
   /** 리사이즈로 변경된 컬럼 폭 — cell width 적용용. */
   columnWidths?: Record<string, number>;
+  /** 셀 우클릭 핸들러 — contextMenu가 활성일 때만 전달. */
+  onCellContextMenu?: (rowId: RowId, columnId: string, row: TRow, e: React.MouseEvent) => void;
 }
 
 function GridRow<TRow>({
@@ -1197,6 +1623,7 @@ function GridRow<TRow>({
   height,
   pinOffsets,
   columnWidths,
+  onCellContextMenu,
 }: GridRowProps<TRow>) {
   const { row, id, level, hasChildren, expanded } = flatRow;
   return (
@@ -1235,6 +1662,9 @@ function GridRow<TRow>({
             onClick={() => onCellActivate(id, col.id)}
             onMouseDown={(e) => onCellMouseDown(id, col.id, e)}
             onMouseEnter={() => onCellMouseEnter(id, col.id)}
+            onContextMenu={
+              onCellContextMenu ? (e) => onCellContextMenu(id, col.id, row, e) : undefined
+            }
             className={cn(
               'relative cursor-pointer select-none px-3 py-2 text-foreground',
               // active 셀: outline ring 강조 (단일 셀)
@@ -1321,6 +1751,7 @@ interface VirtualizedBodyProps<TRow> {
   onCellMouseEnter: (rowId: RowId, columnId: string) => void;
   pinOffsets?: Record<string, { left?: number; right?: number; isEdge?: boolean }>;
   columnWidths?: Record<string, number>;
+  onCellContextMenu?: (rowId: RowId, columnId: string, row: TRow, e: React.MouseEvent) => void;
 }
 
 function VirtualizedBody<TRow>({
@@ -1341,6 +1772,7 @@ function VirtualizedBody<TRow>({
   onCellMouseEnter,
   pinOffsets,
   columnWidths,
+  onCellContextMenu,
 }: VirtualizedBodyProps<TRow>) {
   const items = virtualizer.getVirtualItems();
   const totalSize = virtualizer.getTotalSize();
@@ -1379,6 +1811,7 @@ function VirtualizedBody<TRow>({
             height={rowHeight}
             pinOffsets={pinOffsets}
             columnWidths={columnWidths}
+            onCellContextMenu={onCellContextMenu}
           />
         );
       })}

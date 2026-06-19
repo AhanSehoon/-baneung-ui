@@ -47,6 +47,7 @@ const navSections: { label: string; items: NavItem[] }[] = [
           { href: '/grid/row-operations', label: '행 추가 · 삭제 · 다중 셀 선택' },
           { href: '/grid/csv-export', label: 'CSV 다운로드' },
           { href: '/grid/advanced', label: '고급 — 검색·고정·푸터·Excel' },
+          { href: '/grid/phase3', label: '키보드·우클릭·순서·영속화' },
         ],
       },
     ],

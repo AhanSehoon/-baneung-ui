@@ -25,6 +25,11 @@ export interface GridColumn<TRow = Record<string, unknown>> {
    */
   resizable?: boolean;
   /**
+   * 헤더 드래그로 컬럼 순서 변경 가능 여부 (Grid 전체 `reorderable=true`일 때 개별 예외).
+   * 기본은 Grid의 `reorderable` 값을 따름. false면 드래그 시작 X, 대상으로도 X.
+   */
+  draggable?: boolean;
+  /**
    * 초기 표시 여부. false면 그리드 첫 렌더 시 숨김 상태로 시작.
    * 사용자가 컬럼 메뉴에서 토글하면 변경됨 (uncontrolled).
    * controlled 모드는 Grid의 `columnVisibility` prop 사용.
@@ -116,11 +121,57 @@ export interface GridSortState {
 }
 
 /**
+ * 그리드의 사용자 설정 스냅샷 — 컬럼 폭/순서/표시·숨김/정렬을 저장 가능한 형태로 직렬화.
+ *
+ * - `viewKey` prop을 지정하면 localStorage에 자동 저장·복원.
+ * - `ref.getView()` / `ref.setView()`로 imperative 제어 가능.
+ * - 필터 상태는 Set 직렬화 복잡도 때문에 미포함 (후속 버전).
+ */
+export interface GridView {
+  sortStates: GridSortState[];
+  columnWidths: Record<string, number>;
+  columnVisibility: Record<string, boolean>;
+  columnOrder: string[];
+}
+
+/**
+ * 컨텍스트 메뉴 (우클릭) 콜백에 전달되는 정보.
+ *
+ * - `rowId`, `columnId`: 우클릭된 셀의 좌표
+ * - `row`: 그 행의 원본 객체 (편집 반영된 최신값)
+ * - `selectedRowIds`: 현재 체크박스로 선택된 행 ID들 (없으면 빈 배열)
+ */
+export interface GridContextMenuContext<TRow = Record<string, unknown>> {
+  rowId: string | number;
+  columnId: string;
+  row: TRow;
+  selectedRowIds: (string | number)[];
+}
+
+/**
+ * 컨텍스트 메뉴 항목. `separator=true`면 구분선만 그리고 label 무시.
+ */
+export interface GridContextMenuItem<TRow = Record<string, unknown>> {
+  /** 항목 ID — testing/추적용. */
+  id?: string;
+  /** 표시 라벨 (string 또는 ReactNode). */
+  label?: React.ReactNode;
+  /** 단축키 힌트 (우측에 옅은 색으로 표시). 실제 키 바인딩은 별개. */
+  shortcut?: string;
+  /** 클릭 시 실행할 액션. */
+  onClick?: (ctx: GridContextMenuContext<TRow>) => void;
+  /** true면 클릭 불가 (회색 처리). */
+  disabled?: boolean;
+  /** 항목 대신 구분선. */
+  separator?: boolean;
+}
+
+/**
  * Grid 컴포넌트 props.
  */
 export interface GridProps<TRow = Record<string, unknown>> extends Omit<
   React.HTMLAttributes<HTMLDivElement>,
-  'children' | 'onChange'
+  'children' | 'onChange' | 'contextMenu'
 > {
   /** 컬럼 정의 배열. */
   columns: GridColumn<TRow>[];
@@ -226,6 +277,17 @@ export interface GridProps<TRow = Record<string, unknown>> extends Omit<
    */
   onColumnResize?: (columnId: string, widthPx: number) => void;
   /**
+   * 헤더 드래그&드롭으로 컬럼 순서 변경 활성 (기본 false).
+   * 개별 컬럼은 `column.draggable=false`로 예외 처리.
+   * Pin 그룹(left/middle/right) 안에서만 순서 변경됨 — pin 경계는 유지.
+   */
+  reorderable?: boolean;
+  /**
+   * 컬럼 순서 변경 시 호출. 새 순서 (columnId 배열).
+   * localStorage 등에 저장 후 재방문 시 복원하는 데 사용.
+   */
+  onColumnReorder?: (newOrder: string[]) => void;
+  /**
    * 컬럼 표시/숨김 상태 (controlled). `{ [columnId]: boolean }` — true=표시, false=숨김.
    * 미지정 시 내부 state로 관리 (column.hidden 초기값 사용).
    */
@@ -243,6 +305,28 @@ export interface GridProps<TRow = Record<string, unknown>> extends Omit<
    * 합계는 visible/필터/검색 적용된 행에 대해 계산됨.
    */
   showFooter?: boolean;
+  /**
+   * View 상태 저장 키 — localStorage에 `baneung-grid:{viewKey}` 형태로 저장.
+   *
+   * 활성 시:
+   * - 첫 마운트에 저장된 view를 로드해서 자동 적용
+   * - sortStates / columnWidths / columnVisibility / columnOrder 변경 시 자동 저장
+   * - 사용자가 페이지를 떠났다 돌아와도 마지막 설정 유지
+   *
+   * `onViewChange` 콜백으로 커스텀 영속화도 가능 (서버 저장 등).
+   */
+  viewKey?: string;
+  /**
+   * View 상태(정렬·폭·표시·순서) 변경 시 호출. localStorage 외 다른 영속화 채널 (서버 등) 용도.
+   */
+  onViewChange?: (view: GridView) => void;
+  /**
+   * 우클릭 컨텍스트 메뉴.
+   * - `true`: 기본 메뉴 표시 (복사 · 붙여넣기 · 셀 클리어 · 행 삭제 · CSV/Excel 내보내기)
+   * - 함수: 셀별로 메뉴 항목을 동적으로 생성. ctx 기반 분기 가능.
+   * - 미지정/false: 비활성 (브라우저 기본 메뉴 동작)
+   */
+  contextMenu?: boolean | ((ctx: GridContextMenuContext<TRow>) => GridContextMenuItem<TRow>[]);
   /**
    * Tree(계층) 모드. 첫 컬럼에 caret + 들여쓰기를 자동 삽입해 펼침/접힘 가능한
    * 트리뷰로 렌더한다. `getChildren`이 함께 필요.
@@ -360,4 +444,10 @@ export interface GridHandle<TRow = Record<string, unknown>> {
   getColumnVisibility(): Record<string, boolean>;
   /** 컬럼 표시/숨김 토글. */
   toggleColumnVisibility(columnId: string): void;
+  /** 현재 view 스냅샷 — 정렬·폭·표시·순서. localStorage에 저장하거나 서버에 보낼 때 사용. */
+  getView(): GridView;
+  /** view를 부분 적용. 미지정 필드는 그대로 유지. */
+  setView(view: Partial<GridView>): void;
+  /** 저장된 view를 초기 상태로 리셋 (정렬 해제·폭 기본·모두 표시·원본 컬럼 순서). */
+  clearView(): void;
 }

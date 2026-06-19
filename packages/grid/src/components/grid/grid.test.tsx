@@ -1106,4 +1106,173 @@ describe('Grid', () => {
     expect(onResize).toHaveBeenCalledTimes(1);
     expect(onResize.mock.calls[0]?.[0]).toBe('name');
   });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Phase 3 — 키보드 네비게이션 / 컨텍스트 메뉴 / 컬럼 순서 / view
+  // ───────────────────────────────────────────────────────────────────────────
+
+  it('키보드 네비게이션: 화살표/Tab/Enter로 active 셀 이동', async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <Grid columns={columns} data={sampleData} getRowId={(r) => r.id} />,
+    );
+
+    // 첫 셀 클릭으로 active 시작
+    await user.click(screen.getByText('사과'));
+    const gridContainer = container.querySelector('[tabindex="0"]') as HTMLElement;
+
+    // ArrowRight → 옆 셀 (가격)
+    fireEvent.keyDown(gridContainer, { key: 'ArrowRight' });
+    let active = container.querySelector('td[aria-selected="true"]');
+    expect(active?.textContent).toBe('1000');
+
+    // ArrowDown → 같은 컬럼 다음 행 (2000)
+    fireEvent.keyDown(gridContainer, { key: 'ArrowDown' });
+    active = container.querySelector('td[aria-selected="true"]');
+    expect(active?.textContent).toBe('2000');
+
+    // ArrowLeft → 옆 셀 (바나나)
+    fireEvent.keyDown(gridContainer, { key: 'ArrowLeft' });
+    active = container.querySelector('td[aria-selected="true"]');
+    expect(active?.textContent).toBe('바나나');
+
+    // Enter → 다음 행 (체리)
+    fireEvent.keyDown(gridContainer, { key: 'Enter' });
+    active = container.querySelector('td[aria-selected="true"]');
+    expect(active?.textContent).toBe('체리');
+
+    // End → 행 마지막 컬럼 (3000)
+    fireEvent.keyDown(gridContainer, { key: 'End' });
+    active = container.querySelector('td[aria-selected="true"]');
+    expect(active?.textContent).toBe('3000');
+
+    // Ctrl+Home → 그리드 시작
+    fireEvent.keyDown(gridContainer, { key: 'Home', ctrlKey: true });
+    active = container.querySelector('td[aria-selected="true"]');
+    expect(active?.textContent).toBe('사과');
+  });
+
+  it('컨텍스트 메뉴: contextMenu=true 시 우클릭으로 기본 메뉴 표시', async () => {
+    const user = userEvent.setup();
+    render(<Grid columns={columns} data={sampleData} contextMenu getRowId={(r) => r.id} />);
+    const cell = screen.getByText('사과').closest('td')!;
+    fireEvent.contextMenu(cell, { clientX: 100, clientY: 100 });
+    const menu = await screen.findByRole('menu', { name: '셀 컨텍스트 메뉴' });
+    expect(menu).toBeInTheDocument();
+    // 기본 항목들 존재
+    expect(screen.getByRole('menuitem', { name: /복사/ })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /붙여넣기/ })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /셀 클리어/ })).toBeInTheDocument();
+    // Escape로 닫힘
+    await user.keyboard('{Escape}');
+    await waitFor(() => {
+      expect(screen.queryByRole('menu', { name: '셀 컨텍스트 메뉴' })).not.toBeInTheDocument();
+    });
+  });
+
+  it('컨텍스트 메뉴: 함수형 prop으로 커스텀 항목 + ctx 전달', () => {
+    const onCustom = vi.fn();
+    render(
+      <Grid
+        columns={columns}
+        data={sampleData}
+        getRowId={(r) => r.id}
+        contextMenu={(ctx) => [
+          { id: 'custom', label: `상세보기 #${ctx.rowId}`, onClick: () => onCustom(ctx) },
+        ]}
+      />,
+    );
+    const cell = screen.getByText('바나나').closest('td')!;
+    fireEvent.contextMenu(cell);
+    const item = screen.getByRole('menuitem', { name: '상세보기 #2' });
+    fireEvent.click(item);
+    expect(onCustom).toHaveBeenCalledWith(expect.objectContaining({ rowId: 2, columnId: 'name' }));
+  });
+
+  it('컬럼 순서 변경: reorderable + drag&drop 으로 헤더 순서 이동', () => {
+    const onReorder = vi.fn();
+    const { container } = render(
+      <Grid columns={columns} data={sampleData} reorderable onColumnReorder={onReorder} />,
+    );
+    const headers = container.querySelectorAll('th[scope="col"]');
+    // 시뮬: 'name' 헤더 → 'price' 헤더로 drop
+    const nameHeader = headers[0] as HTMLElement; // 이름
+    const priceHeader = headers[1] as HTMLElement; // 가격
+    const dataTransfer = {
+      setData: vi.fn(),
+      getData: vi.fn().mockReturnValue('name'),
+      effectAllowed: '',
+      dropEffect: '',
+    };
+    fireEvent.dragStart(nameHeader, { dataTransfer });
+    fireEvent.dragOver(priceHeader, { dataTransfer });
+    fireEvent.drop(priceHeader, { dataTransfer });
+    expect(onReorder).toHaveBeenCalledWith(['price', 'name']);
+  });
+
+  it('view: ref API로 getView / setView / clearView 동작', () => {
+    const ref = React.createRef<GridHandle<Row>>();
+    render(<Grid ref={ref} columns={columns} data={sampleData} />);
+    // 초기 view
+    let v = ref.current!.getView();
+    expect(v.sortStates).toEqual([]);
+    expect(v.columnOrder).toEqual(['name', 'price']);
+    // setView 적용
+    act(() => {
+      ref.current?.setView({
+        sortStates: [{ columnId: 'price', direction: 'desc' }],
+        columnWidths: { price: 200 },
+        columnVisibility: { price: false },
+      });
+    });
+    v = ref.current!.getView();
+    expect(v.sortStates).toEqual([{ columnId: 'price', direction: 'desc' }]);
+    expect(v.columnWidths.price).toBe(200);
+    expect(v.columnVisibility.price).toBe(false);
+    // clearView
+    act(() => {
+      ref.current?.clearView();
+    });
+    v = ref.current!.getView();
+    expect(v.sortStates).toEqual([]);
+    expect(v.columnWidths).toEqual({});
+  });
+
+  it('view: viewKey 지정 시 localStorage에 저장 → 다시 마운트해도 복원', async () => {
+    const user = userEvent.setup();
+    // localStorage 모킹은 jsdom 기본 — 진짜 사용 가능
+    window.localStorage.removeItem('baneung-grid:test-grid');
+    const sortableCols: GridColumn<Row>[] = [
+      { id: 'name', header: '이름', accessor: 'name', sortable: true },
+      { id: 'price', header: '가격', accessor: 'price', sortable: true },
+    ];
+    const { unmount } = render(
+      <Grid columns={sortableCols} data={sampleData} viewKey="test-grid" getRowId={(r) => r.id} />,
+    );
+    // 이름 컬럼 정렬 활성화
+    await user.click(screen.getByRole('columnheader', { name: /이름/ }));
+    // localStorage에 저장됨 확인
+    await waitFor(() => {
+      const stored = window.localStorage.getItem('baneung-grid:test-grid');
+      expect(stored).toBeTruthy();
+      const view = JSON.parse(stored!);
+      expect(view.sortStates).toEqual([{ columnId: 'name', direction: 'asc' }]);
+    });
+    // 언마운트 후 다시 마운트 → 저장된 정렬이 복원돼야 함
+    unmount();
+    const ref = React.createRef<GridHandle<Row>>();
+    render(
+      <Grid
+        ref={ref}
+        columns={sortableCols}
+        data={sampleData}
+        viewKey="test-grid"
+        getRowId={(r) => r.id}
+      />,
+    );
+    await waitFor(() => {
+      expect(ref.current?.getView().sortStates).toEqual([{ columnId: 'name', direction: 'asc' }]);
+    });
+    window.localStorage.removeItem('baneung-grid:test-grid');
+  });
 });
