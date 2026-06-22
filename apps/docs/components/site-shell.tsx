@@ -22,7 +22,11 @@ interface NavItem {
 const navSections: { label: string; items: NavItem[] }[] = [
   {
     label: '시작하기',
-    items: [{ href: '/', label: '소개' }],
+    items: [
+      { href: '/', label: '소개' },
+      { href: '/install', label: 'Install' },
+      { href: '/tokens', label: '디자인 토큰' },
+    ],
   },
   {
     label: '패키지',
@@ -31,18 +35,13 @@ const navSections: { label: string; items: NavItem[] }[] = [
         // href 없음 → toggle-only. 클릭 시 자식 메뉴 펼침/접힘.
         label: 'UI',
         version: 'v1.0.11',
-        children: [
-          { href: '/install', label: 'Install' },
-          { href: '/tokens', label: '디자인 토큰' },
-          { href: '/components', label: '컴포넌트' },
-        ],
+        children: [{ href: '/components', label: '컴포넌트' }],
       },
       {
         // href 없음 → toggle-only. 클릭 시 자식 메뉴 펼침/접힘.
         label: 'Grid',
         version: 'v0.9.1',
         children: [
-          { href: '/grid/install', label: 'Install' },
           { href: '/grid/props', label: 'Props' },
           { href: '/grid/basic', label: '기본 사용' },
           { href: '/grid/custom-renderer', label: '커스텀 렌더러' },
@@ -73,7 +72,6 @@ const navSections: { label: string; items: NavItem[] }[] = [
         label: 'Editor',
         version: 'v0.1.1',
         children: [
-          { href: '/editor/install', label: 'Install' },
           { href: '/editor/props', label: 'Props' },
           { href: '/editor/basic', label: '기본 사용' },
           { href: '/editor/controlled', label: '제어 · HTML 출력' },
