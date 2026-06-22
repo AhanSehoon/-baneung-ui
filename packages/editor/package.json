@@ -1,6 +1,6 @@
 {
   "name": "@baneung-pack/editor",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": false,
   "license": "Apache-2.0",
   "description": "바능 디자인 시스템 리치 텍스트 에디터 — 풀스택 WYSIWYG 툴바 + 이미지 붙여넣기/드롭 + 반응형 (의존성 0)",

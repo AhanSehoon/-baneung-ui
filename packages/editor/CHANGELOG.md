@@ -1,5 +1,16 @@
 # @baneung-pack/editor
 
+## 0.1.1
+
+### Patch Changes
+
+- package.json description / keywords 갱신.
+  - description: 일부 표현 수정
+  - keywords 신규 추가: WYSIWYG · editor · rich-text-editor · react · contenteditable · design-system · baneung
+  - README에 키워드 강조 한 줄 추가
+
+  소스/dist 변경 없음. npmjs.com 페이지의 메타데이터만 업데이트.
+
 ## 0.1.0
 
 ### Minor Changes
