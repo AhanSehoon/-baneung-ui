@@ -4,7 +4,20 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import * as React from 'react';
 
-import { Badge, Button, Heading, Item, Kbd, Muted, Separator, cn } from '@baneung-pack/ui';
+import {
+  Badge,
+  Button,
+  Heading,
+  Item,
+  Kbd,
+  Muted,
+  Separator,
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetTrigger,
+  cn,
+} from '@baneung-pack/ui';
 
 import { CommandPalette } from '@/components/command-palette';
 import { useI18n } from '@/components/i18n-provider';
@@ -172,117 +185,179 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
+  // 모바일 시트 open/close. pathname 변경 시 자동 닫힘.
+  const [mobileNavOpen, setMobileNavOpen] = React.useState(false);
+  React.useEffect(() => {
+    setMobileNavOpen(false);
+  }, [pathname]);
+
+  /**
+   * 네비게이션 트리 — 사이드바와 모바일 시트가 공유.
+   * onItemClick은 모바일 시트에서 자식 링크 클릭 시 시트를 닫는 용도.
+   */
+  const renderNavTree = (onItemClick?: () => void) => (
+    <nav className="flex-1 overflow-y-auto p-3">
+      {navSections.map((section) => (
+        <div key={section.labelKey} className="mb-4">
+          <Muted className="px-3 text-xs uppercase tracking-wide">{t(section.labelKey)}</Muted>
+          <ul className="mt-1 flex flex-col">
+            {section.items.map((item) => {
+              const isLink = !!item.href;
+              const isActive = isLink && pathname === item.href;
+              const isExpanded = item.children ? expandedLabels.has(item.label) : false;
+              const showChildren = item.children && isExpanded;
+
+              return (
+                <li key={item.label}>
+                  {isLink ? (
+                    <Item asChild selected={isActive} className="px-3">
+                      <Link href={item.href!} onClick={onItemClick}>
+                        {t(item.label)}
+                      </Link>
+                    </Item>
+                  ) : (
+                    // toggle-only: 자식 메뉴 펼침/접힘 버튼 (패키지 이름은 번역 X)
+                    <Item asChild className="px-3">
+                      <button
+                        type="button"
+                        aria-expanded={isExpanded}
+                        onClick={() => toggleLabel(item.label)}
+                        className="flex w-full items-center justify-between gap-2 whitespace-nowrap"
+                      >
+                        <span className="flex min-w-0 items-center gap-1.5 truncate">
+                          <span className="text-sm font-medium">{item.label}</span>
+                          {item.version && (
+                            <Badge variant="secondary" className="text-[10px]">
+                              {item.version}
+                            </Badge>
+                          )}
+                        </span>
+                        <svg
+                          aria-hidden="true"
+                          viewBox="0 0 16 16"
+                          className={cn(
+                            'h-4 w-4 shrink-0 text-foreground-muted transition-transform duration-fast ease-standard',
+                            isExpanded && 'rotate-90',
+                          )}
+                          fill="currentColor"
+                        >
+                          <path d="M6 4l4 4-4 4V4z" />
+                        </svg>
+                      </button>
+                    </Item>
+                  )}
+                  {showChildren && (
+                    <ul className="ml-4 mt-1 flex flex-col border-l border-border-subtle">
+                      {item.children!.map((child) => {
+                        const childIsActive = pathname === child.href;
+                        return (
+                          <li key={child.href}>
+                            <Item asChild selected={childIsActive} className="px-3 text-xs">
+                              <Link href={child.href} onClick={onItemClick}>
+                                {t(child.label)}
+                              </Link>
+                            </Item>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </nav>
+  );
+
   return (
     <div className="flex min-h-screen w-full">
-      {/* 좌측 Sidebar */}
+      {/* 데스크탑 사이드바 (md 이상) */}
       <aside className="hidden w-64 shrink-0 border-r border-border-default md:flex md:flex-col">
         <div className="flex h-14 items-center border-b border-border-default px-4">
           <Heading level={6} className="text-base">
             @baneung-pack
           </Heading>
         </div>
-        <nav className="flex-1 overflow-y-auto p-3">
-          {navSections.map((section) => (
-            <div key={section.labelKey} className="mb-4">
-              <Muted className="px-3 text-xs uppercase tracking-wide">{t(section.labelKey)}</Muted>
-              <ul className="mt-1 flex flex-col">
-                {section.items.map((item) => {
-                  const isLink = !!item.href;
-                  const isActive = isLink && pathname === item.href;
-                  const isExpanded = item.children ? expandedLabels.has(item.label) : false;
-                  const showChildren = item.children && isExpanded;
-
-                  return (
-                    <li key={item.label}>
-                      {isLink ? (
-                        <Item asChild selected={isActive} className="px-3">
-                          <Link href={item.href!}>{t(item.label)}</Link>
-                        </Item>
-                      ) : (
-                        // toggle-only: 자식 메뉴 펼침/접힘 버튼 (패키지 이름은 번역 X)
-                        <Item asChild className="px-3">
-                          <button
-                            type="button"
-                            aria-expanded={isExpanded}
-                            onClick={() => toggleLabel(item.label)}
-                            className="flex w-full items-center justify-between gap-2 whitespace-nowrap"
-                          >
-                            <span className="flex min-w-0 items-center gap-1.5 truncate">
-                              <span className="text-sm font-medium">{item.label}</span>
-                              {item.version && (
-                                <Badge variant="secondary" className="text-[10px]">
-                                  {item.version}
-                                </Badge>
-                              )}
-                            </span>
-                            <svg
-                              aria-hidden="true"
-                              viewBox="0 0 16 16"
-                              className={cn(
-                                'h-4 w-4 shrink-0 text-foreground-muted transition-transform duration-fast ease-standard',
-                                isExpanded && 'rotate-90',
-                              )}
-                              fill="currentColor"
-                            >
-                              <path d="M6 4l4 4-4 4V4z" />
-                            </svg>
-                          </button>
-                        </Item>
-                      )}
-                      {showChildren && (
-                        <ul className="ml-4 mt-1 flex flex-col border-l border-border-subtle">
-                          {item.children!.map((child) => {
-                            const childIsActive = pathname === child.href;
-                            return (
-                              <li key={child.href}>
-                                <Item asChild selected={childIsActive} className="px-3 text-xs">
-                                  <Link href={child.href}>{t(child.label)}</Link>
-                                </Item>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ))}
-        </nav>
+        {renderNavTree()}
       </aside>
 
       {/* 메인 영역 */}
-      <div className="flex flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col">
         <header
           className={cn(
-            'sticky top-0 z-30 flex h-14 items-center justify-between gap-4 px-4 md:px-6',
+            'sticky top-0 z-30 flex h-14 items-center justify-between gap-2 px-3 md:gap-4 md:px-6',
             'border-b border-border-default bg-canvas/80 backdrop-blur',
           )}
         >
-          <div className="flex items-center gap-3">
-            <span className="md:hidden">
-              <Heading level={6} className="text-base">
-                @baneung-pack/ui
-              </Heading>
-            </span>
+          <div className="flex min-w-0 items-center gap-2">
+            {/* 모바일 햄버거 — md 미만에서만 표시. 클릭 시 시트 드로어로 네비 노출. */}
+            <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-label={t('header.openMenu')}
+                  className="md:hidden"
+                >
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 16 16"
+                    className="h-5 w-5"
+                    fill="currentColor"
+                  >
+                    <path d="M2 4h12v1.5H2zm0 3.75h12v1.5H2zm0 3.75h12V13H2z" />
+                  </svg>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="flex w-72 flex-col p-0">
+                <SheetTitle className="sr-only">@baneung-pack</SheetTitle>
+                <div className="flex h-14 shrink-0 items-center border-b border-border-default px-4">
+                  <Heading level={6} className="text-base">
+                    @baneung-pack
+                  </Heading>
+                </div>
+                {renderNavTree(() => setMobileNavOpen(false))}
+              </SheetContent>
+            </Sheet>
+            {/* 모바일 브랜드 — 너무 좁으면 사라지지 않게 truncate */}
+            <Heading level={6} className="truncate text-sm md:hidden">
+              @baneung-pack
+            </Heading>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-1 md:gap-2">
+            {/* 검색 버튼 — 데스크탑에서는 라벨+단축키, 모바일에서는 돋보기 아이콘만 */}
             <button
               type="button"
               onClick={() => setPaletteOpen(true)}
               className={cn(
-                'inline-flex h-9 items-center gap-2 px-3 text-sm',
+                'inline-flex h-9 items-center gap-2 text-sm',
                 'border border-border-default bg-canvas text-foreground-muted hover:text-foreground',
                 'rounded-none transition-colors duration-fast ease-standard',
                 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
+                // 모바일: 아이콘만 (정사각형) / 데스크탑: 라벨 + 단축키
+                'w-9 justify-center md:w-auto md:justify-start md:px-3',
               )}
-              aria-label="명령 팔레트 열기"
+              aria-label={t('header.search')}
             >
-              <span>{t('header.search')}</span>
-              <Kbd>⌘ K</Kbd>
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 16 16"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
+                <circle cx="7" cy="7" r="4.5" />
+                <path d="m10.5 10.5 3 3" strokeLinecap="round" />
+              </svg>
+              <span className="hidden md:inline">{t('header.search')}</span>
+              <span className="hidden md:inline">
+                <Kbd>⌘ K</Kbd>
+              </span>
             </button>
-            <Separator orientation="vertical" className="h-6" />
+            <Separator orientation="vertical" className="hidden h-6 md:block" />
             {/* 언어 토글 — 테마 버튼 좌측에 배치 */}
             <Button
               variant="ghost"

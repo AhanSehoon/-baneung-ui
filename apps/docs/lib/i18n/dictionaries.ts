@@ -59,6 +59,7 @@ const ko: Dict = {
   'header.search': '검색',
   'header.themeToggle': '테마 토글',
   'header.languageToggle': '언어 토글',
+  'header.openMenu': '메뉴 열기',
   // 공통
   'common.koLabel': '한국어',
   'common.enLabel': 'English',
@@ -296,6 +297,7 @@ const en: Dict = {
   'header.search': 'Search',
   'header.themeToggle': 'Toggle theme',
   'header.languageToggle': 'Toggle language',
+  'header.openMenu': 'Open menu',
   // Common
   'common.koLabel': '한국어',
   'common.enLabel': 'English',
