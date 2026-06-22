@@ -1,9 +1,11 @@
 # @baneung-pack/editor
 
-> 바능 디자인 시스템 리치 텍스트 에디터 — TinyMCE급 WYSIWYG 툴바 + 이미지 붙여넣기/드롭 + 반응형
+> 바능 디자인 시스템 리치 텍스트 에디터 — 풀스택 WYSIWYG 툴바 + 이미지 붙여넣기/드롭 + 반응형
 
 [![npm](https://img.shields.io/npm/v/@baneung-pack/editor.svg)](https://www.npmjs.com/package/@baneung-pack/editor)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://github.com/BaneungCop/-baneung-ui/blob/master/LICENSE)
+
+Keywords: **WYSIWYG** · **editor** · rich-text · contenteditable · React · design-system
 
 **📖 데모 / 컴포넌트 카탈로그**: https://ui.baneung.com
 
