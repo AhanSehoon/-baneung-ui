@@ -13,8 +13,8 @@ interface NavItem {
   /** 페이지 link. 없으면 toggle-only(자식 메뉴 펼침/접힘 버튼)로 동작. */
   href?: string;
   label: string;
-  /** 옵션 — label 아래 작은 글씨로 표시할 패키지명(긴 이름의 줄바꿈 깨짐 방지). */
-  pkg?: string;
+  /** 옵션 — 라벨 우측에 표시할 버전 뱃지 (예: 'v1.0.11'). */
+  version?: string;
   /** 옵션 — 이 항목 아래 들여쓰기로 표시할 하위 메뉴. */
   children?: { href: string; label: string }[];
 }
@@ -22,20 +22,25 @@ interface NavItem {
 const navSections: { label: string; items: NavItem[] }[] = [
   {
     label: '시작하기',
-    items: [
-      { href: '/', label: '소개' },
-      { href: '/install', label: 'Install' },
-      { href: '/tokens', label: '디자인 토큰' },
-      { href: '/components', label: '컴포넌트' },
-    ],
+    items: [{ href: '/', label: '소개' }],
   },
   {
     label: '패키지',
     items: [
       {
         // href 없음 → toggle-only. 클릭 시 자식 메뉴 펼침/접힘.
+        label: 'UI',
+        version: 'v1.0.11',
+        children: [
+          { href: '/install', label: 'Install' },
+          { href: '/tokens', label: '디자인 토큰' },
+          { href: '/components', label: '컴포넌트' },
+        ],
+      },
+      {
+        // href 없음 → toggle-only. 클릭 시 자식 메뉴 펼침/접힘.
         label: 'Grid',
-        pkg: '@baneung-pack/grid',
+        version: 'v0.9.1',
         children: [
           { href: '/grid/install', label: 'Install' },
           { href: '/grid/props', label: 'Props' },
@@ -66,7 +71,7 @@ const navSections: { label: string; items: NavItem[] }[] = [
       {
         // href 없음 → toggle-only. 클릭 시 자식 메뉴 펼침/접힘.
         label: 'Editor',
-        pkg: '@baneung-pack/editor',
+        version: 'v0.1.1',
         children: [
           { href: '/editor/install', label: 'Install' },
           { href: '/editor/props', label: 'Props' },
@@ -161,13 +166,10 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen w-full">
       {/* 좌측 Sidebar */}
       <aside className="hidden w-64 shrink-0 border-r border-border-default md:flex md:flex-col">
-        <div className="flex h-14 items-center gap-2 border-b border-border-default px-4">
+        <div className="flex h-14 items-center border-b border-border-default px-4">
           <Heading level={6} className="text-base">
-            @baneung-pack/ui
+            @baneung-pack
           </Heading>
-          <Badge variant="secondary" className="text-[10px]">
-            v1.0.11
-          </Badge>
         </div>
         <nav className="flex-1 overflow-y-auto p-3">
           {navSections.map((section) => (
@@ -193,15 +195,15 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
                             type="button"
                             aria-expanded={isExpanded}
                             onClick={() => toggleLabel(item.label)}
-                            className="flex w-full items-center justify-between gap-1"
+                            className="flex w-full items-center justify-between gap-2 whitespace-nowrap"
                           >
-                            {/* 한 줄에 모두 들어가도록 작은 글씨 + 줄바꿈 금지 */}
-                            <span className="whitespace-nowrap text-xs">
-                              {item.label}
-                              {item.pkg && (
-                                <span className="ml-1 font-normal text-foreground-muted">
-                                  ({item.pkg})
-                                </span>
+                            {/* 패키지명 + 버전 뱃지 — 한 줄에 모두 표시 (줄바꿈 금지) */}
+                            <span className="flex min-w-0 items-center gap-1.5 truncate">
+                              <span className="text-sm font-medium">{item.label}</span>
+                              {item.version && (
+                                <Badge variant="secondary" className="text-[10px]">
+                                  {item.version}
+                                </Badge>
                               )}
                             </span>
                             <svg
