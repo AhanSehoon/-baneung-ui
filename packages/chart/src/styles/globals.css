@@ -1,0 +1,23 @@
+/*
+ * @baneung-pack/chart — 글로벌 스타일 진입점.
+ *
+ * Canvas(chart.js) 기반이라 차트 자체에는 거의 스타일이 필요 없다.
+ * 컨테이너 wrapper의 디자인 토큰 변수(라이트/다크 모드)만 보장하면 충분.
+ *
+ * # CSS 격리 (Cascade Layers)
+ * @baneung-pack/ui·grid·editor와 동일하게 모든 라이브러리 스타일을 `@layer baneung`에 격리.
+ *
+ * # ⚠️ 반드시 `@import 'tailwindcss' layer(baneung)`를 써야 함
+ * Tailwind 전체 import는 내부적으로 `@layer baneung > @layer theme/base/utilities` 중첩 sub-layer
+ * 를 만든다. preflight/utilities만 따로 import하면 sub-layer 없이 `@layer baneung` 직속에
+ * preflight 리셋이 들어가고, CSS cascade-layer 규칙상 "부모 layer 직속" 규칙이 sub-layer
+ * 규칙(ui의 .text-5xl 등)을 이기기 때문에 헤딩/카드 등 ui 컴포넌트 스타일이 깨진다.
+ */
+@import 'tailwindcss' layer(baneung);
+@import '@baneung-pack/tokens/css' layer(baneung);
+
+@source "../**/*.{ts,tsx}";
+
+@theme inline {
+  --font-sans: var(--typography-font-family-sans);
+}
