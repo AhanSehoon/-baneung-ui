@@ -7,7 +7,6 @@ import * as React from 'react';
 import {
   Badge,
   Button,
-  Heading,
   Item,
   Kbd,
   Muted,
@@ -43,7 +42,7 @@ const navSections: { labelKey: string; items: NavItem[] }[] = [
   {
     labelKey: 'nav.gettingStarted',
     items: [
-      { href: '/', label: 'nav.intro' },
+      { href: '/intro', label: 'nav.intro' },
       { href: '/install', label: 'nav.install' },
       { href: '/tokens', label: 'nav.tokens' },
     ],
@@ -348,9 +347,10 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
       {/* 데스크탑 사이드바 (md 이상) */}
       <aside className="hidden w-64 shrink-0 border-r border-border-default md:flex md:flex-col">
         <div className="flex h-14 items-center border-b border-border-default px-4">
-          <Heading level={6} className="text-base">
+          {/* 브랜드 클릭 → 메인 (3D 시뮬레이션) */}
+          <Link href="/" className="text-base font-semibold hover:underline">
             @baneung-pack
-          </Heading>
+          </Link>
         </div>
         {renderNavTree()}
       </aside>
@@ -386,17 +386,21 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
               <SheetContent side="left" className="flex w-72 flex-col p-0">
                 <SheetTitle className="sr-only">@baneung-pack</SheetTitle>
                 <div className="flex h-14 shrink-0 items-center border-b border-border-default px-4">
-                  <Heading level={6} className="text-base">
+                  <Link
+                    href="/"
+                    className="text-base font-semibold hover:underline"
+                    onClick={() => setMobileNavOpen(false)}
+                  >
                     @baneung-pack
-                  </Heading>
+                  </Link>
                 </div>
                 {renderNavTree(() => setMobileNavOpen(false))}
               </SheetContent>
             </Sheet>
             {/* 모바일 브랜드 — 너무 좁으면 사라지지 않게 truncate */}
-            <Heading level={6} className="truncate text-sm md:hidden">
+            <Link href="/" className="truncate text-sm font-semibold hover:underline md:hidden">
               @baneung-pack
-            </Heading>
+            </Link>
           </div>
           <div className="flex shrink-0 items-center gap-1 md:gap-2">
             {/* 검색 버튼 — 데스크탑에서는 라벨+단축키, 모바일에서는 돋보기 아이콘만 */}

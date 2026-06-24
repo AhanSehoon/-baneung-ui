@@ -1,0 +1,82 @@
+# 바능 디자인 시스템 (Baneung Design System)
+
+> @baneung-pack — React design system from Pangyo, Korea.
+> Sharp/angular design, WCAG AA accessibility, Korean-first typography.
+> Ships UI / Grid / Chart / Editor packages with a unified token system.
+
+## Packages
+
+- [@baneung-pack/ui](https://www.npmjs.com/package/@baneung-pack/ui): 60+ React 컴포넌트 (Accordion ~ Typography). Radix UI primitives 기반, WCAG AA.
+- [@baneung-pack/grid](https://www.npmjs.com/package/@baneung-pack/grid): 가상화 · Excel 내보내기 · 컬럼 고정 · Tree · 인라인 편집 지원 데이터 그리드.
+- [@baneung-pack/chart](https://www.npmjs.com/package/@baneung-pack/chart): Chart.js 기반 차트 라이브러리. 한글 숫자 포맷, sr-only 접근성 표 일급 지원.
+- [@baneung-pack/editor](https://www.npmjs.com/package/@baneung-pack/editor): WYSIWYG 리치텍스트 에디터. 이미지 붙여넣기, 커스텀 툴바, 0-dependency 코어.
+- [@baneung-pack/tokens](https://www.npmjs.com/package/@baneung-pack/tokens): 디자인 토큰 (CSS 변수 · TS · JSON). 단일 진실 공급원(SSOT).
+
+## Core Principles
+
+- 각진(sharp/angular) 디자인 — `border-radius` 최대 4px
+- WCAG 2.1 AA 접근성 — 키보드 네비게이션·color contrast·ARIA 모두 검증
+- 한글 우선 — Pretendard Variable, IME(한글 입력기) 호환 보장
+- TypeScript strict — `any` 금지, 모든 public API 타입 명시
+- Headless 우선 — Radix UI primitives + cva + tailwind-merge
+- 트리쉐이커블 — 모든 컴포넌트 개별 import 가능
+
+## Tech Stack
+
+- React 18+, React 19+ 지원
+- TypeScript strict
+- Tailwind CSS v4 (internal, compiled CSS로 배포)
+- Radix UI primitives (a11y headless)
+- Turborepo + pnpm workspaces
+- Vitest + @testing-library/react + axe-core
+
+## Docs
+
+- [홈](/) — 인터랙티브 3D 소개
+- [소개](/intro) — 프로젝트 배경·철학
+- [설치 가이드](/install) — npm/pnpm 설치 및 첫 사용
+- [컴포넌트 카탈로그](/components) — 모든 UI 컴포넌트 + 라이브 프리뷰
+- [디자인 토큰](/tokens) — 컬러·타이포·스페이싱·라디우스·모션
+- [접근성](/accessibility) — WCAG AA 체크리스트와 검증 방법
+- [버전·체인지로그](/versions) — 릴리스 히스토리
+
+## Categories
+
+### UI Components (@baneung-pack/ui)
+
+Button · Select · Dialog · Sheet · Drawer · Popover · Tabs · Accordion ·
+Toast · Calendar · Slider · Switch · Checkbox · Radio · Input · Textarea ·
+Tooltip · Avatar · Badge · Card · Separator · Table · Toggle · ToggleGroup ·
+Typography · Field · Form ... (60+ 컴포넌트)
+
+### Data Grid (@baneung-pack/grid)
+
+- [기본 사용](/grid/basic)
+- [가상화 (5000행 부드럽게)](/grid/virtualized)
+- [Excel 내보내기](/grid/excel)
+- [CSV 내보내기](/grid/csv-export)
+- [컬럼 고정 (좌/우 pin)](/grid/column-pin)
+- [Tree 모드](/grid/tree)
+- [인라인 편집](/grid/editing)
+- [정렬·필터·리사이즈](/grid/editors-sort-filter)
+- [페이지네이션](/grid/pagination)
+- [전체 기능 데모](/grid/all-features)
+
+### Charts (@baneung-pack/chart)
+
+- [BarChart](/chart/bar) · [LineChart](/chart/line) · [AreaChart](/chart/area)
+- [PieChart](/chart/pie) · [DoughnutChart](/chart/doughnut)
+- [ScatterChart](/chart/scatter) · [RadarChart](/chart/radar)
+- [WaterfallChart](/chart/waterfall) · [FlowChart](/chart/flow)
+- 한글 숫자 포맷 (`valueFormat="korean"` — 1234억 1234만 …)
+- 접근성 표 (`a11yTable` prop으로 sr-only `<table>` 자동 생성)
+
+### Editor (@baneung-pack/editor)
+
+- [기본](/editor/basic) · [풀 기능](/editor/full) · [Controlled 모드](/editor/controlled)
+- [이미지 붙여넣기](/editor/image) · [커스텀 툴바](/editor/custom-toolbar) · [읽기 전용](/editor/readonly)
+- 0-dependency 코어 (외부 에디터 SDK 미사용)
+
+## License
+
+MIT

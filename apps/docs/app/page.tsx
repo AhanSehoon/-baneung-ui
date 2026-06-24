@@ -1,136 +1,81 @@
 'use client';
 
-import {
-  Badge,
-  Button,
-  ButtonGroup,
-  Heading,
-  Lead,
-  Muted,
-  Separator,
-  Toggle,
-  ToggleGroup,
-  ToggleGroupItem,
-  cn,
-} from '@baneung-pack/ui';
+import dynamic from 'next/dynamic';
+import Link from 'next/link';
 
-import { useI18n } from '@/components/i18n-provider';
+/**
+ * Canvas 2D scene — client-only (window/canvas 즉시 참조).
+ */
+const HomeScene = dynamic(() => import('@/components/home-scene').then((m) => m.HomeScene), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full items-center justify-center bg-white text-sm text-foreground-muted">
+      Loading…
+    </div>
+  ),
+});
 
-const variants = ['primary', 'secondary', 'outline', 'ghost', 'destructive'] as const;
-const sizes = ['sm', 'md', 'lg'] as const;
-
+/**
+ * 홈 페이지 — 36 Days of Type 스타일 (흰 배경 + 검정 컴포넌트명 텍스트가 떨어지며 쌓임).
+ *
+ * 오버레이 최소화: 좌상단 타이틀 + 좌하단 CTA. 조작 안내 등은 의도적으로 생략.
+ */
 export default function HomePage() {
-  const { t } = useI18n();
   return (
-    <main className={cn('mx-auto max-w-3xl px-8 py-16', 'flex flex-col gap-10')}>
-      <header className="flex flex-col gap-2">
-        <Heading level={1}>{t('intro.title')}</Heading>
-        <Lead>{t('intro.lead')}</Lead>
-        <Muted>Buttons &amp; Toggles 데모</Muted>
-      </header>
+    <main className="relative h-[calc(100vh-3.5rem)] overflow-hidden bg-white">
+      <div className="absolute inset-0">
+        <HomeScene />
+      </div>
 
-      <Separator />
-
-      <section className="flex flex-col gap-4">
-        <Heading level={2}>Button — variant × size</Heading>
-        <table className="border-collapse">
-          <thead>
-            <tr>
-              <th className="px-3 py-2 text-left text-xs font-medium text-foreground-muted">
-                variant \ size
-              </th>
-              {sizes.map((s) => (
-                <th
-                  key={s}
-                  className="px-3 py-2 text-left text-xs font-medium text-foreground-muted"
-                >
-                  {s}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {variants.map((v) => (
-              <tr key={v}>
-                <td className="px-3 py-2 text-xs text-foreground-muted">{v}</td>
-                {sizes.map((s) => (
-                  <td key={s} className="px-3 py-2">
-                    <Button variant={v} size={s}>
-                      Button
-                    </Button>
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <Heading level={2}>Loading + asChild</Heading>
-        <div className="flex gap-3">
-          <Button loading>저장 중</Button>
-          <Button asChild variant="outline">
-            <a href="https://github.com" rel="noreferrer noopener" target="_blank">
-              GitHub로 이동
-            </a>
-          </Button>
+      {/* ── 좌상단: 타이틀 ─────────────────────────────────────────────────── */}
+      <div className="pointer-events-none absolute left-4 top-4 z-10 flex flex-col gap-1 md:left-8 md:top-8">
+        <div className="text-[10px] uppercase tracking-[0.3em] text-foreground-muted">
+          @baneung-pack · v1.0
         </div>
-      </section>
+        {/* 브랜드 토큰 그라데이션 — packages/tokens/src/color.ts의 baneungNavy + baneungTeal 팔레트.
+            BANEUNG (line 1): navy-900 → navy-700 → teal-700 — 묵직하게 시작
+            Design System (line 2): teal-700 → teal-500 → teal-300 — 액센트로 가볍게 마무리
+            두 줄이 teal-700(#3B716C)에서 자연스럽게 연결. */}
+        <h1 className="font-black leading-[0.9] tracking-tighter">
+          <span
+            className="block bg-clip-text text-[40px] text-transparent md:text-[88px]"
+            style={{
+              backgroundImage: 'linear-gradient(135deg, #1F2937 0%, #3B4B63 55%, #3B716C 100%)',
+            }}
+          >
+            BANEUNG
+          </span>
+          <span
+            className="block bg-clip-text text-[26px] text-transparent md:text-[56px]"
+            style={{
+              backgroundImage: 'linear-gradient(135deg, #3B716C 0%, #5BA8A0 55%, #85C9BD 100%)',
+            }}
+          >
+            Design System
+          </span>
+        </h1>
+        <p className="mt-3 max-w-[16rem] text-xs leading-relaxed text-foreground-muted md:max-w-sm md:text-sm">
+          판교에서 만든 디자인 시스템 — UI · Grid · Chart · Editor.
+          <br />
+          각진 디자인, WCAG AA 접근성, 한글 우선.
+        </p>
+      </div>
 
-      <section className="flex flex-col gap-3">
-        <Heading level={2}>ButtonGroup</Heading>
-        <div className="flex flex-col gap-3">
-          <ButtonGroup aria-label="페이지 이동">
-            <Button variant="outline">이전</Button>
-            <Button variant="outline">현재</Button>
-            <Button variant="outline">다음</Button>
-          </ButtonGroup>
-          <ButtonGroup orientation="vertical" aria-label="세로 그룹">
-            <Button variant="outline">A</Button>
-            <Button variant="outline">B</Button>
-            <Button variant="outline">C</Button>
-          </ButtonGroup>
-        </div>
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <Heading level={2}>Toggle &amp; ToggleGroup</Heading>
-        <div className="flex flex-wrap items-center gap-4">
-          <Toggle aria-label="굵게" defaultPressed>
-            B
-          </Toggle>
-          <ToggleGroup type="single" defaultValue="left" aria-label="정렬">
-            <ToggleGroupItem variant="outline" value="left">
-              왼쪽
-            </ToggleGroupItem>
-            <ToggleGroupItem variant="outline" value="center">
-              가운데
-            </ToggleGroupItem>
-            <ToggleGroupItem variant="outline" value="right">
-              오른쪽
-            </ToggleGroupItem>
-          </ToggleGroup>
-          <ToggleGroup type="multiple" aria-label="포맷">
-            <ToggleGroupItem variant="outline" value="bold">
-              B
-            </ToggleGroupItem>
-            <ToggleGroupItem variant="outline" value="italic">
-              I
-            </ToggleGroupItem>
-            <ToggleGroupItem variant="outline" value="underline">
-              U
-            </ToggleGroupItem>
-          </ToggleGroup>
-        </div>
-      </section>
-
-      <Separator />
-
-      <footer className="flex items-center gap-2 text-sm text-foreground-subtle">
-        <Badge variant="success">출시 준비</Badge>
-        <span>@baneung-pack/ui — Phase 4</span>
-      </footer>
+      {/* ── 좌하단: CTA ────────────────────────────────────────────────────── */}
+      <div className="pointer-events-auto absolute bottom-4 left-4 z-10 flex flex-wrap gap-2 md:bottom-8 md:left-8">
+        <Link
+          href="/intro"
+          className="inline-flex h-10 items-center border border-foreground bg-white px-5 text-xs font-semibold uppercase tracking-[0.2em] text-foreground transition-colors hover:bg-foreground hover:text-foreground-inverse"
+        >
+          패키지 둘러보기 →
+        </Link>
+        <Link
+          href="/install"
+          className="inline-flex h-10 items-center px-5 text-xs font-semibold uppercase tracking-[0.2em] text-foreground-muted transition-colors hover:text-foreground"
+        >
+          설치 가이드
+        </Link>
+      </div>
     </main>
   );
 }
