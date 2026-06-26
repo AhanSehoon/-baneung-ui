@@ -1,8 +1,17 @@
 'use client';
 
 import * as React from 'react';
+import { useState } from 'react';
 
-import { Calendar, Combobox, Command, DatePicker, NativeSelect, Select } from '@baneung-pack/ui';
+import {
+  Calendar,
+  Combobox,
+  Command,
+  DatePicker,
+  NativeSelect,
+  Select,
+  type CalendarEvent,
+} from '@baneung-pack/ui';
 
 import type { ComponentSpec } from './_types';
 
@@ -224,46 +233,6 @@ const cities = [
     ],
   },
   {
-    slug: 'calendar',
-    title: 'Calendar',
-    category: 'Selection',
-    description:
-      'react-day-picker v9 래퍼. mode="single" / "multiple" / "range" 지원, 토큰 기반 클래스 매핑.',
-    importPath: "import { Calendar } from '@baneung-pack/ui';",
-    subpath: "import { Calendar } from '@baneung-pack/ui/calendar';",
-    Example: () => <Calendar mode="single" defaultMonth={new Date()} />,
-    code: `import { Calendar } from '@baneung-pack/ui';
-
-const [date, setDate] = useState<Date>();
-
-<Calendar
-  mode="single"
-  selected={date}
-  onSelect={setDate}
-  defaultMonth={new Date()}
-/>
-
-// 범위 모드
-<Calendar mode="range" selected={range} onSelect={setRange} />`,
-    api: [
-      {
-        property: 'mode',
-        description: '선택 모드',
-        type: "'single' | 'multiple' | 'range'",
-        default: "'default'",
-      },
-      { property: 'selected', description: '선택된 날짜', type: 'Date | Date[] | DateRange' },
-      { property: 'onSelect', description: '선택 변경', type: '(date) => void' },
-      {
-        property: 'disabled',
-        description: '비활성 날짜 매처',
-        type: 'Date[] | ((date: Date) => boolean)',
-      },
-      { property: 'month', description: '표시 월 (controlled)', type: 'Date' },
-      { property: 'defaultMonth', description: '표시 월 (uncontrolled)', type: 'Date' },
-    ],
-  },
-  {
     slug: 'date-picker',
     title: 'DatePicker',
     category: 'Selection',
@@ -308,4 +277,131 @@ const [date, setDate] = useState<Date>();
       { property: 'disabled', description: '비활성', type: 'boolean', default: 'false' },
     ],
   },
+  {
+    slug: 'calendar',
+    title: 'Calendar',
+    category: 'Selection',
+    description:
+      '월간 일정 캘린더 (Google Calendar 스타일). 1일/range/다중 lane/더보기/드래그-드롭 지원.',
+    importPath: "import { Calendar } from '@baneung-pack/ui';",
+    subpath: "import { Calendar } from '@baneung-pack/ui/calendar';",
+    Example: () => <CalendarDemo />,
+    code: `import { Calendar, type CalendarEvent } from '@baneung-pack/ui';
+import { useState } from 'react';
+
+const [events, setEvents] = useState<CalendarEvent[]>([
+  { id: '1', start: new Date(2026, 5, 15), end: new Date(2026, 5, 15),
+    title: '회의', color: 'blue', allDay: true },
+  { id: '2', start: new Date(2026, 5, 20), end: new Date(2026, 5, 23),
+    title: '워크샵', color: 'green' },
+]);
+
+<Calendar
+  events={events}
+  onEventClick={(e) => alert(e.title)}
+  onEventMove={(e, start, end) =>
+    setEvents(prev => prev.map(ev => ev.id === e.id ? { ...ev, start, end } : ev))
+  }
+/>`,
+    api: [
+      { property: 'events', description: '표시할 일정 배열', type: 'CalendarEvent[]' },
+      { property: 'month', description: '표시 월 (controlled)', type: 'Date' },
+      { property: 'defaultMonth', description: '표시 월 초기값', type: 'Date' },
+      { property: 'onMonthChange', description: '월 변경 콜백', type: '(date: Date) => void' },
+      { property: 'onEventClick', description: '일정 클릭', type: '(event) => void' },
+      {
+        property: 'onEventMove',
+        description: '일정 드래그 이동 — 전달 시 DnD 활성',
+        type: '(event, start, end) => void',
+      },
+      {
+        property: 'maxVisible',
+        description: '셀당 최대 표시 일정 수',
+        type: 'number',
+        default: '3',
+      },
+      {
+        property: 'locale',
+        description: '표시 언어',
+        type: 'CalendarLocale | Locale',
+        default: "'ko'",
+      },
+    ],
+  },
 ];
+
+/**
+ * CalendarDemo — 데모용 stateful wrapper (드래그 이동 시 state 갱신).
+ */
+function CalendarDemo(): React.ReactElement {
+  const today = new Date();
+  const m = today.getMonth();
+  const y = today.getFullYear();
+  const [events, setEvents] = useState<CalendarEvent[]>([
+    {
+      id: '1',
+      start: new Date(y, m, 5),
+      end: new Date(y, m, 5),
+      title: '디자인 리뷰',
+      color: 'blue',
+      allDay: true,
+    },
+    {
+      id: '2',
+      start: new Date(y, m, 10),
+      end: new Date(y, m, 13),
+      title: '사내 워크샵',
+      color: 'green',
+    },
+    {
+      id: '3',
+      start: new Date(y, m, 12),
+      end: new Date(y, m, 12),
+      title: '점심 미팅',
+      color: 'amber',
+      allDay: false,
+    },
+    {
+      id: '4',
+      start: new Date(y, m, 18),
+      end: new Date(y, m, 22),
+      title: '컨퍼런스 출장',
+      color: 'purple',
+    },
+    {
+      id: '5',
+      start: new Date(y, m, 20),
+      end: new Date(y, m, 20),
+      title: '발표 준비',
+      color: 'red',
+      allDay: true,
+    },
+    {
+      id: '6',
+      start: new Date(y, m, 20),
+      end: new Date(y, m, 20),
+      title: '리뷰 회의',
+      color: 'gray',
+      allDay: true,
+    },
+    {
+      id: '7',
+      start: new Date(y, m, 20),
+      end: new Date(y, m, 20),
+      title: '추가 일정',
+      color: 'blue',
+      allDay: true,
+    },
+    { id: '8', start: new Date(y, m, 25), end: new Date(y, m, 27), title: '연휴', color: 'gray' },
+  ]);
+
+  return (
+    <Calendar
+      events={events}
+      onEventClick={(e) => alert(`클릭: ${e.title}`)}
+      onEventMove={(e, start, end) =>
+        setEvents((prev) => prev.map((ev) => (ev.id === e.id ? { ...ev, start, end } : ev)))
+      }
+    />
+  );
+}

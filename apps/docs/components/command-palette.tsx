@@ -5,39 +5,32 @@ import * as React from 'react';
 
 import { Command, Dialog, DialogContent, DialogDescription, DialogTitle } from '@baneung-pack/ui';
 
+import { componentMetadata } from '@/lib/components-metadata';
+
 interface CommandPaletteProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-const navItems = [
-  { value: '/', label: '소개', group: '페이지' },
-  { value: '/tokens', label: '디자인 토큰', group: '페이지' },
-  { value: '/components', label: '컴포넌트', group: '페이지' },
-  { value: '/accessibility', label: '접근성', group: '페이지' },
+/**
+ * 주요 페이지 목록 — siteRoutes의 핵심 페이지를 미러링.
+ * 이펙트/그리드/차트 등 서브페이지는 너무 많아 componentMetadata와 별도 그룹으로 표시.
+ */
+const pageItems: { href: string; label: string }[] = [
+  { href: '/', label: '홈' },
+  { href: '/intro', label: '소개' },
+  { href: '/install', label: '설치 가이드' },
+  { href: '/components', label: '컴포넌트 카탈로그' },
+  { href: '/tokens', label: '디자인 토큰' },
+  { href: '/accessibility', label: '접근성' },
+  { href: '/versions', label: '버전·체인지로그' },
 ];
-
-const componentItems = [
-  'Button',
-  'Input',
-  'Field',
-  'Select',
-  'Combobox',
-  'Calendar',
-  'Card',
-  'Tabs',
-  'Pagination',
-  'Dialog',
-  'Drawer',
-  'Toast',
-  'DataTable',
-  'Carousel',
-].map((name) => ({ value: `/components#${name.toLowerCase()}`, label: name, group: '컴포넌트' }));
 
 /**
  * CommandPalette — ⌘K로 열리는 전역 검색 + 네비.
  *
- * Dialog 안에 Command를 합성. 항목 선택 시 router.push.
+ * 페이지: 주요 라우트.
+ * 컴포넌트: componentMetadata에서 자동 — 추가/제거 시 즉시 반영.
  */
 export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const router = useRouter();
@@ -57,12 +50,12 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
           <Command.List>
             <Command.Empty>결과 없음</Command.Empty>
             <Command.Group heading="페이지">
-              {navItems.map((item) => (
+              {pageItems.map((item) => (
                 <Command.Item
-                  key={item.value}
-                  value={item.value}
+                  key={item.href}
+                  value={item.href}
                   keywords={[item.label]}
-                  onSelect={() => handleSelect(item.value)}
+                  onSelect={() => handleSelect(item.href)}
                 >
                   {item.label}
                 </Command.Item>
@@ -70,16 +63,23 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             </Command.Group>
             <Command.Separator />
             <Command.Group heading="컴포넌트">
-              {componentItems.map((item) => (
-                <Command.Item
-                  key={item.value}
-                  value={item.value}
-                  keywords={[item.label]}
-                  onSelect={() => handleSelect(item.value)}
-                >
-                  {item.label}
-                </Command.Item>
-              ))}
+              {componentMetadata.map((c) => {
+                const href = `/components/${c.slug}`;
+                return (
+                  <Command.Item
+                    key={c.slug}
+                    value={href}
+                    // 검색 매칭: 제목 / 슬러그 / 카테고리 모두 키워드로
+                    keywords={[c.title, c.slug, c.category, c.description]}
+                    onSelect={() => handleSelect(href)}
+                  >
+                    <span className="flex w-full items-center justify-between gap-2">
+                      <span>{c.title}</span>
+                      <span className="text-xs text-foreground-subtle">{c.category}</span>
+                    </span>
+                  </Command.Item>
+                );
+              })}
             </Command.Group>
           </Command.List>
         </Command>

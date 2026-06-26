@@ -177,16 +177,16 @@ export const componentMetadata: ComponentMeta[] = [
   },
   { slug: 'command', title: 'Command', category: 'Selection', description: 'cmdk 기반 ⌘K 팔레트.' },
   {
-    slug: 'calendar',
-    title: 'Calendar',
-    category: 'Selection',
-    description: 'react-day-picker v9 래퍼.',
-  },
-  {
     slug: 'date-picker',
     title: 'DatePicker',
     category: 'Selection',
     description: 'Calendar + Popover.',
+  },
+  {
+    slug: 'calendar',
+    title: 'Calendar',
+    category: 'Selection',
+    description: '월간 일정 캘린더 — Google Calendar 스타일. range/lane/드래그.',
   },
 
   // Layout

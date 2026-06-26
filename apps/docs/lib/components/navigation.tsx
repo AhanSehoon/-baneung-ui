@@ -32,8 +32,30 @@ import {
 import type { ComponentSpec } from './_types';
 
 function PaginationExample() {
-  // uncontrolled — defaultPage 미지정 시 1로 시작.
-  return <Pagination total={1000} />;
+  // 두 가지 모드를 함께 노출 — 기본(responsive)은 좁은 화면에서 "1 / N"으로 압축되므로
+  // 숫자 페이지 패턴도 같이 보여줘 시각 차이를 명확히 한다.
+  return (
+    <div className="flex flex-col gap-6">
+      <div>
+        <div className="mb-2 text-xs text-foreground-muted">
+          페이지 번호 모드 (responsive=false) — 항상 숫자 노출
+        </div>
+        <Pagination total={10} responsive={false} />
+      </div>
+      <div>
+        <div className="mb-2 text-xs text-foreground-muted">
+          많은 페이지 + ellipsis — 1 … N 패턴
+        </div>
+        <Pagination total={1000} defaultPage={42} responsive={false} />
+      </div>
+      <div>
+        <div className="mb-2 text-xs text-foreground-muted">
+          기본 — 모바일에서 자동으로 &quot;1 / N&quot; 단순 모드, 데스크톱은 숫자
+        </div>
+        <Pagination total={1000} />
+      </div>
+    </div>
+  );
 }
 
 export const navigationComponents: ComponentSpec[] = [
@@ -167,7 +189,13 @@ export const navigationComponents: ComponentSpec[] = [
     Example: PaginationExample,
     code: `import { Pagination } from '@baneung-pack/ui';
 
-// uncontrolled — defaultPage 기본 1
+// 페이지 번호 모드 — 항상 숫자 노출 (모바일에서도 단순 모드로 안 바뀜)
+<Pagination total={10} responsive={false} />
+
+// 많은 페이지 — 자동으로 1 … N ellipsis 패턴
+<Pagination total={1000} defaultPage={42} responsive={false} />
+
+// 기본 (responsive) — 모바일은 "1 / N", 데스크톱은 숫자
 <Pagination total={1000} />
 
 // controlled
@@ -211,35 +239,81 @@ const [page, setPage] = useState(1);
       "import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent, NavigationMenuLink } from '@baneung-pack/ui';",
     subpath: "import { NavigationMenu } from '@baneung-pack/ui/navigation-menu';",
     Example: () => (
-      <NavigationMenu>
-        <NavigationMenuList>
-          <NavigationMenuItem>
-            <NavigationMenuTrigger>제품</NavigationMenuTrigger>
-            <NavigationMenuContent>
-              <ul className="grid w-64 gap-2 p-3 text-sm">
-                <li>
-                  <NavigationMenuLink href="/p1" className="block hover:underline">
-                    제품 A
-                  </NavigationMenuLink>
-                </li>
-                <li>
-                  <NavigationMenuLink href="/p2" className="block hover:underline">
-                    제품 B
-                  </NavigationMenuLink>
-                </li>
-              </ul>
-            </NavigationMenuContent>
-          </NavigationMenuItem>
-          <NavigationMenuItem>
-            <NavigationMenuLink
-              href="/about"
-              className="inline-flex h-10 items-center px-3 text-sm hover:bg-surface"
-            >
-              소개
-            </NavigationMenuLink>
-          </NavigationMenuItem>
-        </NavigationMenuList>
-      </NavigationMenu>
+      // dropdown은 absolute로 펼쳐지므로 공간 + overflow visible 필요.
+      // 데모에서는 "제품" 메뉴를 기본 열림으로 두어 한눈에 동작 확인 가능하게 함.
+      <div className="relative min-h-60 overflow-visible">
+        <NavigationMenu defaultValue="products">
+          <NavigationMenuList>
+            <NavigationMenuItem value="products">
+              <NavigationMenuTrigger>제품</NavigationMenuTrigger>
+              <NavigationMenuContent>
+                <ul className="grid w-72 gap-1 p-3 text-sm">
+                  <li>
+                    <NavigationMenuLink
+                      href="/p/a"
+                      className="block rounded-none px-3 py-2 hover:bg-surface"
+                    >
+                      <div className="font-medium text-foreground">제품 A</div>
+                      <div className="text-xs text-foreground-muted">기본 라인 — 입문용</div>
+                    </NavigationMenuLink>
+                  </li>
+                  <li>
+                    <NavigationMenuLink
+                      href="/p/b"
+                      className="block rounded-none px-3 py-2 hover:bg-surface"
+                    >
+                      <div className="font-medium text-foreground">제품 B</div>
+                      <div className="text-xs text-foreground-muted">프로 라인 — 고급 기능</div>
+                    </NavigationMenuLink>
+                  </li>
+                  <li>
+                    <NavigationMenuLink
+                      href="/p/c"
+                      className="block rounded-none px-3 py-2 hover:bg-surface"
+                    >
+                      <div className="font-medium text-foreground">제품 C</div>
+                      <div className="text-xs text-foreground-muted">엔터프라이즈</div>
+                    </NavigationMenuLink>
+                  </li>
+                </ul>
+              </NavigationMenuContent>
+            </NavigationMenuItem>
+            <NavigationMenuItem value="resources">
+              <NavigationMenuTrigger>리소스</NavigationMenuTrigger>
+              <NavigationMenuContent>
+                <ul className="grid w-72 gap-1 p-3 text-sm">
+                  <li>
+                    <NavigationMenuLink
+                      href="/docs"
+                      className="block rounded-none px-3 py-2 hover:bg-surface"
+                    >
+                      <div className="font-medium text-foreground">문서</div>
+                      <div className="text-xs text-foreground-muted">가이드 · API 레퍼런스</div>
+                    </NavigationMenuLink>
+                  </li>
+                  <li>
+                    <NavigationMenuLink
+                      href="/blog"
+                      className="block rounded-none px-3 py-2 hover:bg-surface"
+                    >
+                      <div className="font-medium text-foreground">블로그</div>
+                      <div className="text-xs text-foreground-muted">최신 업데이트 · 사례</div>
+                    </NavigationMenuLink>
+                  </li>
+                </ul>
+              </NavigationMenuContent>
+            </NavigationMenuItem>
+            <NavigationMenuItem>
+              <NavigationMenuLink
+                href="/about"
+                className="inline-flex h-10 items-center border border-border-default bg-canvas px-3 text-sm font-medium hover:bg-surface"
+              >
+                소개
+              </NavigationMenuLink>
+            </NavigationMenuItem>
+          </NavigationMenuList>
+        </NavigationMenu>
+      </div>
     ),
     code: `import {
   NavigationMenu,

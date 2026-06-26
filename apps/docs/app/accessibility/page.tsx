@@ -111,6 +111,41 @@ export default function AccessibilityPage() {
           </Muted>
         </section>
       )}
+
+      <section className="flex flex-col gap-4">
+        <Heading level={2}>{t('a11y.motionTitle')}</Heading>
+        <Muted>{t('a11y.motionIntro')}</Muted>
+        <Card variant="outlined">
+          <CardContent className="p-6">
+            <ul className="flex flex-col gap-2 text-sm">
+              <li className="flex items-start gap-2">
+                <span aria-hidden="true" className="mt-0.5 text-success">
+                  ✓
+                </span>
+                <span>{t('a11y.motion.reduced')}</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span aria-hidden="true" className="mt-0.5 text-success">
+                  ✓
+                </span>
+                <span>{t('a11y.motion.ariaLabel')}</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span aria-hidden="true" className="mt-0.5 text-success">
+                  ✓
+                </span>
+                <span>{t('a11y.motion.ariaHidden')}</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span aria-hidden="true" className="mt-0.5 text-success">
+                  ✓
+                </span>
+                <span>{t('a11y.motion.touch')}</span>
+              </li>
+            </ul>
+          </CardContent>
+        </Card>
+      </section>
     </div>
   );
 }

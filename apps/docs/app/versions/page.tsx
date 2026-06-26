@@ -37,9 +37,19 @@ interface PackageHistory {
 
 const uiHistory: PackageHistory = {
   pkg: '@baneung-pack/ui',
-  current: '1.0.11',
+  current: '1.0.12',
   npmUrl: 'https://www.npmjs.com/package/@baneung-pack/ui',
   entries: [
+    {
+      version: '1.0.12',
+      type: 'patch',
+      summary: 'Select: Dialog/Sheet/Drawer 내부에서 옵션 휠 스크롤 동작 수정',
+      details: [
+        '원인: Radix Dialog의 react-remove-scroll이 트리 밖 wheel/touchmove를 preventDefault → Popover.Portal로 document.body에 띄운 옵션 리스트가 휠 무반응',
+        '수정: 트리거에서 가장 가까운 [role="dialog"] 조상을 찾아 Popover.Portal의 container로 지정 — Dialog/Sheet/Drawer(vaul 포함) 모두 적용',
+        '일반 컨텍스트(Dialog 밖)에서는 기존대로 document.body에 portal',
+      ],
+    },
     {
       version: '1.0.11',
       type: 'patch',
@@ -392,6 +402,60 @@ const gridHistory: PackageHistory = {
   ],
 };
 
+const chartHistory: PackageHistory = {
+  pkg: '@baneung-pack/chart',
+  current: '0.3.0',
+  npmUrl: 'https://www.npmjs.com/package/@baneung-pack/chart',
+  entries: [
+    {
+      version: '0.3.0',
+      type: 'minor',
+      summary: '웹 접근성(WCAG 2.1 AA) + 한글 숫자 포맷 + FlowChart 추가',
+      details: [
+        '신규 FlowChart — SVG 기반 노드-엣지 그래프 (chart.js 무관)',
+        'FlowChart edge 4종 내장: straight / bezier / step / smoothstep',
+        'FlowChart 사용자 정의 edge — edgeTypes prop에 SVG path 함수 등록',
+        'FlowChart pan + zoom (마우스 드래그, 휠 in/out 커서 위치 기준)',
+        'FlowChart 화살표 머리, edge 라벨, 흐름 애니메이션, 점선 옵션',
+        '모든 차트에 a11yTable prop (기본 true) — sr-only <table>로 데이터 노출, 스크린리더 호환 (WCAG 1.1.1)',
+        'a11yCaption prop — 표 caption (스크린리더가 먼저 읽음)',
+        '모든 차트에 valueFormat prop — tooltip · 데이터 라벨 · y축 tick 일관 적용',
+        "valueFormat='korean' → 125만 · 1.2억 · 1.5조 자동 변환",
+        "valueFormat='comma' → 1,250,000 천 단위 콤마",
+        '사용자 정의 함수: (n) => string 지원',
+        'MapChart 삭제 — d3-geo, topojson-client peer dep 제거 (chart 패키지 범위 밖으로 판단)',
+        'peer dep 5개 → 3개 감소 (chart.js, react-chartjs-2, chartjs-plugin-datalabels)',
+      ],
+    },
+    {
+      version: '0.2.0',
+      type: 'minor',
+      summary: '렌더링 엔진 교체: SVG(recharts) → Canvas(chart.js)',
+      details: [
+        '대용량 데이터 포인트에서 Canvas 기반이 메모리/페인트 비용이 낮음',
+        'chart.js는 자체적으로 controller/scale/plugin tree-shaking 지원',
+        'SVG DOM 트리 생성 비용 제거',
+        'BREAKING: peer dep 교체 — recharts ^2.12.0 → chart.js ^4.4.0 + react-chartjs-2 ^5.2.0',
+        'BREAKING: PieChart.outerRadius deprecated (chart.js 반응형 — px 외부 반지름 미지원)',
+        'BREAKING: PieChart.innerRadius는 px 대신 0~1 비율로 변경 (chart.js cutout 매핑)',
+        '공통 props는 시그니처 그대로 유지 — 마이그레이션은 dependencies 교체만으로 대부분 동작',
+        'lib/chartjs-setup.ts에서 controller/scale/plugin 일괄 register (사용자 코드 register 불필요)',
+        '"use client" 자동 주입 패턴 유지 (RSC 호환)',
+      ],
+    },
+    {
+      version: '0.1.0',
+      type: 'minor',
+      summary: '초도 출시 — recharts 기반 차트 라이브러리 (0.2.0에서 chart.js로 교체됨)',
+      details: [
+        'BarChart · LineChart · AreaChart · PieChart · DoughnutChart · ScatterChart · RadarChart · WaterfallChart · MixedChart 9종 (당시 recharts 기반)',
+        '공통 props: data / xKey / yKeys / nameKey / valueKey / labels / colors / height / showGrid / showLegend / showTooltip / emptyState / className',
+        '@baneung-pack/tokens 공유로 디자인 일관성',
+      ],
+    },
+  ],
+};
+
 const editorHistory: PackageHistory = {
   pkg: '@baneung-pack/editor',
   current: '0.1.1',
@@ -421,6 +485,43 @@ const editorHistory: PackageHistory = {
         '런타임 의존성 0 (clsx·tailwind-merge만) + @baneung-pack/tokens 공유',
         'React 18 / 19 호환, ESM/CJS dual export',
         '17개 단위 테스트 + axe-core 접근성 0 위반',
+      ],
+    },
+  ],
+};
+
+const effectHistory: PackageHistory = {
+  pkg: '@baneung-pack/effect',
+  current: '0.1.0',
+  npmUrl: 'https://www.npmjs.com/package/@baneung-pack/effect',
+  entries: [
+    {
+      version: '0.1.0',
+      type: 'minor',
+      summary: '초도 출시 — 13개 React 비주얼 이펙트 (Tier 1 + 2 + 3)',
+      details: [
+        // Tier 1
+        'Typewriter — 글자 타이핑 + 깜빡이는 커서 (1회 / 무한 loop), 크기·색·굵기·커서 글자 커스터마이즈',
+        'RotatingWords — "We build [apps]" 단어 슬라이드+페이드 순환 (grid template-areas로 폭 자동 측정)',
+        'ScrambleText — 해킹/디코딩 스타일, 글자 풀 커스텀 (카타카나/HEX/바이너리)',
+        'SplitTextReveal — 글자/단어 단위 순차 페이드+슬라이드, mount/inView 트리거',
+        'CountUp — 숫자 카운터 (천 단위·소수점·prefix/suffix·감소 카운트), easeOutCubic',
+        // Tier 2
+        'GradientText — flow / shimmer 모드, 색상 배열·방향 커스터마이즈',
+        'BlurInText — 흐릿→선명 등장, by char/word/all, mount/inView 트리거',
+        'WavyText — 글자가 파도치거나 통통 튐, 위상 차이로 자연스러운 파동',
+        'GlitchText — RGB 채널 어긋남 글리치, intensity 조절·hover-only 옵션',
+        // Tier 3
+        'VariableFontHover — 커서 주변 글자만 굵어짐 (가변 폰트 보간, smoothstep falloff)',
+        'CircularText — 원형 경로 회전 텍스트 (배지/도장 스타일)',
+        'GravityText — 글자가 중력에 떨어지거나 흩어짐 (mount/hover/inView)',
+        'SpotlightText — 커서 주변만 밝아지는 스포트라이트 (radial-gradient mask)',
+        // 공통 인프라
+        '공통 훅: useReducedMotion (a11y) + useInView (스크롤 reveal 표준화)',
+        '0-dependency 코어 — React peer만, Tailwind 비종속 (inline style 기반)',
+        '모든 컴포넌트 prefers-reduced-motion 자동 존중 (모션 줄임 시 정적 표시)',
+        'aria-label로 원문을 스크린리더에 노출, 애니메이션 span은 aria-hidden',
+        'ESM/CJS dual export + .d.ts, Next.js RSC 호환 (use client 자동 주입)',
       ],
     },
   ],
@@ -501,7 +602,11 @@ export default function VersionsPage() {
       <Separator />
       <PackageHistorySection history={gridHistory} />
       <Separator />
+      <PackageHistorySection history={chartHistory} />
+      <Separator />
       <PackageHistorySection history={editorHistory} />
+      <Separator />
+      <PackageHistorySection history={effectHistory} />
       <Separator />
       <PackageHistorySection history={tokensHistory} />
     </div>

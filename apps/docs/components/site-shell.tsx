@@ -19,6 +19,7 @@ import {
 } from '@baneung-pack/ui';
 
 import { CommandPalette } from '@/components/command-palette';
+import { ContactDialog } from '@/components/contact-dialog';
 import { useI18n } from '@/components/i18n-provider';
 import { useTheme } from '@/components/theme-provider';
 import { componentMetadata } from '@/lib/components-metadata';
@@ -61,6 +62,13 @@ const navSections: { labelKey: string; items: NavItem[] }[] = [
             href: `/components/${m.slug}`,
             label: m.title, // 컴포넌트 고유 명칭은 번역 X
           })),
+          // Effect 패키지에서 UI로 이전된 인터랙션 컴포넌트 (별도 demo URL 유지).
+          { href: '/effect/animated-button', label: 'AnimatedButton' },
+          { href: '/effect/animated-tabs', label: 'AnimatedTabs' },
+          { href: '/effect/copy-button', label: 'CopyButton' },
+          { href: '/effect/like-button', label: 'LikeButton' },
+          { href: '/effect/star-rating', label: 'StarRating' },
+          { href: '/effect/stepper', label: 'Stepper' },
         ],
       },
       {
@@ -165,6 +173,28 @@ const navSections: { labelKey: string; items: NavItem[] }[] = [
           { href: '/editor/full', label: 'nav.editor.full' },
         ],
       },
+      {
+        label: 'Effect',
+        version: 'v0.1.0',
+        children: [
+          { href: '/effect/typewriter', label: 'nav.effect.typewriter' },
+          { href: '/effect/rotating-words', label: 'nav.effect.rotatingWords' },
+          { href: '/effect/scramble-text', label: 'nav.effect.scrambleText' },
+          { href: '/effect/split-text-reveal', label: 'nav.effect.splitTextReveal' },
+          { href: '/effect/count-up', label: 'nav.effect.countUp' },
+          { href: '/effect/gradient-text', label: 'nav.effect.gradientText' },
+          { href: '/effect/blur-in-text', label: 'nav.effect.blurInText' },
+          { href: '/effect/wavy-text', label: 'nav.effect.wavyText' },
+          { href: '/effect/glitch-text', label: 'nav.effect.glitchText' },
+          { href: '/effect/variable-font-hover', label: 'nav.effect.variableFontHover' },
+          { href: '/effect/circular-text', label: 'nav.effect.circularText' },
+          { href: '/effect/gravity-text', label: 'nav.effect.gravityText' },
+          { href: '/effect/spotlight-text', label: 'nav.effect.spotlightText' },
+          // Interactive effects (text 외)
+          { href: '/effect/ripple', label: 'nav.effect.ripple' },
+          { href: '/effect/confetti', label: 'nav.effect.confetti' },
+        ],
+      },
     ],
   },
   {
@@ -213,6 +243,7 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
   const { theme, toggle } = useTheme();
   const { locale, toggleLocale, t } = useI18n();
   const [paletteOpen, setPaletteOpen] = React.useState(false);
+  const [contactOpen, setContactOpen] = React.useState(false);
   // 사용자 수동 토글 + 자동 펼침을 통합한 expanded label 집합.
   const [expandedLabels, setExpandedLabels] = React.useState<Set<string>>(() =>
     autoExpandedLabels(pathname),
@@ -330,7 +361,19 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
   };
 
   const renderNavTree = (onItemClick?: () => void) => (
-    <nav className="flex-1 overflow-y-auto p-3">
+    <nav
+      className={cn(
+        'flex-1 overflow-y-auto p-3',
+        // 토큰화 스크롤바 — Calendar의 CaptionPicker와 동일 디자인.
+        '[&::-webkit-scrollbar]:w-1.5',
+        '[&::-webkit-scrollbar-track]:bg-transparent',
+        '[&::-webkit-scrollbar-thumb]:bg-border-default',
+        '[&::-webkit-scrollbar-thumb]:rounded-full',
+        '[&::-webkit-scrollbar-thumb:hover]:bg-border-strong',
+        '[scrollbar-width:thin]',
+        '[scrollbar-color:var(--color-border-default)_transparent]',
+      )}
+    >
       {navSections.map((section) => (
         <div key={section.labelKey} className="mb-4">
           <Muted className="px-3 text-xs uppercase tracking-wide">{t(section.labelKey)}</Muted>
@@ -344,9 +387,11 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen w-full">
-      {/* 데스크탑 사이드바 (md 이상) */}
-      <aside className="hidden w-64 shrink-0 border-r border-border-default md:flex md:flex-col">
-        <div className="flex h-14 items-center border-b border-border-default px-4">
+      {/* 데스크탑 사이드바 (md 이상).
+          sticky top-0 + h-screen — viewport 높이 고정 → 내부 nav가 독립 스크롤.
+          (이전: 사이드바 자체가 페이지 콘텐츠와 함께 스크롤됐음 — 높이 미명시로 overflow 미발동.) */}
+      <aside className="hidden w-64 shrink-0 border-r border-border-default md:sticky md:top-0 md:flex md:h-screen md:flex-col">
+        <div className="flex h-14 shrink-0 items-center border-b border-border-default px-4">
           {/* 브랜드 클릭 → 메인 (3D 시뮬레이션) */}
           <Link href="/" className="text-base font-semibold hover:underline">
             @baneung-pack
@@ -401,6 +446,30 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
             <Link href="/" className="truncate text-sm font-semibold hover:underline md:hidden">
               @baneung-pack
             </Link>
+            {/* 프로젝트 문의 CTA — 헤더 좌측 빈 영역에 배치.
+                CLAUDE.md 4.7 각진 디자인 원칙대로 rounded-none + 가는 보더.
+                모바일에선 라벨만 짧게, 데스크탑에선 화살표 아이콘 추가. */}
+            <Button
+              type="button"
+              size="sm"
+              variant="primary"
+              onClick={() => setContactOpen(true)}
+              className="hidden md:inline-flex"
+            >
+              {t('header.contact')}
+              <span aria-hidden="true" className="ml-1.5">
+                →
+              </span>
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="primary"
+              onClick={() => setContactOpen(true)}
+              className="md:hidden"
+            >
+              {t('header.contact')}
+            </Button>
           </div>
           <div className="flex shrink-0 items-center gap-1 md:gap-2">
             {/* 검색 버튼 — 데스크탑에서는 라벨+단축키, 모바일에서는 돋보기 아이콘만 */}
@@ -453,6 +522,7 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
       </div>
 
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
+      <ContactDialog open={contactOpen} onOpenChange={setContactOpen} />
     </div>
   );
 }

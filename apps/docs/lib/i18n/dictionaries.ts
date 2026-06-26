@@ -82,6 +82,22 @@ const ko: Dict = {
   'nav.editor.customToolbar': '커스텀 툴바',
   'nav.editor.readonly': '읽기 전용',
   'nav.editor.full': '전체 기능 · ref API',
+  // Effect 패키지
+  'nav.effect.typewriter': 'Typewriter',
+  'nav.effect.rotatingWords': 'RotatingWords',
+  'nav.effect.scrambleText': 'ScrambleText',
+  'nav.effect.splitTextReveal': 'SplitTextReveal',
+  'nav.effect.countUp': 'CountUp',
+  'nav.effect.gradientText': 'GradientText',
+  'nav.effect.blurInText': 'BlurInText',
+  'nav.effect.wavyText': 'WavyText',
+  'nav.effect.glitchText': 'GlitchText',
+  'nav.effect.variableFontHover': 'VariableFontHover',
+  'nav.effect.circularText': 'CircularText',
+  'nav.effect.gravityText': 'GravityText',
+  'nav.effect.spotlightText': 'SpotlightText',
+  'nav.effect.ripple': 'Ripple',
+  'nav.effect.confetti': 'Confetti',
   // 가이드
   'nav.accessibility': '접근성',
   'nav.versions': 'Versions',
@@ -90,6 +106,29 @@ const ko: Dict = {
   'header.themeToggle': '테마 토글',
   'header.languageToggle': '언어 토글',
   'header.openMenu': '메뉴 열기',
+  'header.contact': '프로젝트 문의',
+  // 프로젝트 문의 다이얼로그
+  'contact.title': '함께 만들 프로젝트가 있으신가요?',
+  'contact.copy':
+    'AI Agent · React · Java · C++ · Flutter · Python등 다양한 언어의 개발을 진행합니다. 지금 바로 문의해 주세요.',
+  'contact.company': '주식회사 바능',
+  'contact.homepageBadge': '홈페이지 바로가기',
+  'contact.fieldTitle': '제목',
+  'contact.fieldTitlePlaceholder': '예) 디자인 시스템 도입 컨설팅 요청',
+  'contact.fieldContent': '내용',
+  'contact.fieldContentPlaceholder':
+    '프로젝트 개요, 기간, 예산, 연락 가능 시간 등을 자유롭게 작성해주세요.',
+  'contact.fieldEmail': '답장 받을 이메일',
+  'contact.fieldEmailHint': '답장이 필요하면 이메일을 남겨주세요. 미입력 시 회신이 어렵습니다.',
+  'contact.optional': '선택',
+  'contact.send': '보내기',
+  'contact.sending': '보내는 중…',
+  'contact.cancel': '취소',
+  'contact.close': '닫기',
+  'contact.successTitle': '문의가 정상적으로 접수되었습니다.',
+  'contact.successBody': '빠른 시일 내에 답변 드리겠습니다. 감사합니다.',
+  'contact.errorGeneric': '발송 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+  'contact.errorNetwork': '네트워크 오류 — 잠시 후 다시 시도해 주세요.',
   // 공통
   'common.koLabel': '한국어',
   'common.enLabel': 'English',
@@ -257,6 +296,10 @@ const ko: Dict = {
   'install.pkg.ui': '58개 React 컴포넌트 (Radix 기반).',
   'install.pkg.grid': '데이터 그리드 (가상화, 정렬·필터, Excel 호환).',
   'install.pkg.editor': '리치 텍스트 WYSIWYG 에디터 (의존성 0).',
+  'install.pkg.effect':
+    'Typewriter · RotatingWords · ScrambleText · SplitTextReveal · CountUp 등 비주얼 이펙트 모음. 의존성 0, Tailwind 비종속.',
+  'install.effectNote':
+    '의존성 React peer만. inline style 기반이라 어떤 React 앱에서도 즉시 사용 가능. prefers-reduced-motion 자동 존중.',
   'install.pkg.chart':
     '차트 라이브러리 — Canvas(chart.js) 기반 (Bar / Line / Area / Pie / Doughnut).',
   'install.chartDepsNote':
@@ -315,6 +358,18 @@ const ko: Dict = {
   'a11y.shortcut.homeEnd': '처음/끝으로 이동',
   'a11y.shortcutKeyLabel': '키',
   'a11y.shortcutActionLabel': '동작',
+  // Effect 패키지 — 모션 접근성
+  'a11y.motionTitle': '모션 · 애니메이션 (@baneung-pack/effect)',
+  'a11y.motionIntro':
+    '13개 비주얼 이펙트 컴포넌트 모두 모션 줄임 사용자와 보조 기술 사용자에 대한 동일 원칙을 따릅니다.',
+  'a11y.motion.reduced':
+    '`prefers-reduced-motion: reduce` 자동 존중 — 모션 줄임 OS 설정 시 모든 애니메이션이 즉시 정적 상태로 표시됩니다 (등장 효과는 final state로 즉시 보임).',
+  'a11y.motion.ariaLabel':
+    '`aria-label`로 원문 텍스트를 스크린리더에 한 번에 전달 — 글자 단위로 쪼개진 span을 읽지 않습니다.',
+  'a11y.motion.ariaHidden':
+    '애니메이션을 위해 쪼개진 글자/채널 span은 `aria-hidden="true"` — 보조 기술에 노출되지 않습니다.',
+  'a11y.motion.touch':
+    'hover 기반 인터랙션(VariableFontHover/SpotlightText/GravityText hover trigger)은 터치 디바이스에서는 자연스럽게 비활성 — 콘텐츠 접근 불가능하게 만들지 않습니다.',
 };
 
 const en: Dict = {
@@ -390,6 +445,22 @@ const en: Dict = {
   'nav.editor.customToolbar': 'Custom toolbar',
   'nav.editor.readonly': 'Read-only',
   'nav.editor.full': 'Full features · ref API',
+  // Effect package
+  'nav.effect.typewriter': 'Typewriter',
+  'nav.effect.rotatingWords': 'RotatingWords',
+  'nav.effect.scrambleText': 'ScrambleText',
+  'nav.effect.splitTextReveal': 'SplitTextReveal',
+  'nav.effect.countUp': 'CountUp',
+  'nav.effect.gradientText': 'GradientText',
+  'nav.effect.blurInText': 'BlurInText',
+  'nav.effect.wavyText': 'WavyText',
+  'nav.effect.glitchText': 'GlitchText',
+  'nav.effect.variableFontHover': 'VariableFontHover',
+  'nav.effect.circularText': 'CircularText',
+  'nav.effect.gravityText': 'GravityText',
+  'nav.effect.spotlightText': 'SpotlightText',
+  'nav.effect.ripple': 'Ripple',
+  'nav.effect.confetti': 'Confetti',
   // Guide
   'nav.accessibility': 'Accessibility',
   'nav.versions': 'Versions',
@@ -398,6 +469,30 @@ const en: Dict = {
   'header.themeToggle': 'Toggle theme',
   'header.languageToggle': 'Toggle language',
   'header.openMenu': 'Open menu',
+  'header.contact': 'Project Inquiry',
+  // Project inquiry dialog
+  'contact.title': 'Got a project to build together?',
+  'contact.copy':
+    'We work across AI Agents · React · Java · C++ · Flutter · Python and more. Reach out and let’s talk.',
+  'contact.company': 'Baneung Inc.',
+  'contact.homepageBadge': 'Visit homepage',
+  'contact.fieldTitle': 'Subject',
+  'contact.fieldTitlePlaceholder': 'e.g. Design system adoption consulting',
+  'contact.fieldContent': 'Message',
+  'contact.fieldContentPlaceholder':
+    'Tell us about the project: scope, timeline, budget, best time to reach you, etc.',
+  'contact.fieldEmail': 'Reply-to email',
+  'contact.fieldEmailHint':
+    'Add your email so we can reply. Without it, we cannot respond directly.',
+  'contact.optional': 'optional',
+  'contact.send': 'Send',
+  'contact.sending': 'Sending…',
+  'contact.cancel': 'Cancel',
+  'contact.close': 'Close',
+  'contact.successTitle': 'Your inquiry has been received.',
+  'contact.successBody': 'We will get back to you shortly. Thank you.',
+  'contact.errorGeneric': 'Failed to send. Please try again later.',
+  'contact.errorNetwork': 'Network error — please try again later.',
   // Common
   'common.koLabel': '한국어',
   'common.enLabel': 'English',
@@ -572,6 +667,10 @@ const en: Dict = {
   'install.pkg.ui': '58 React components (Radix-based).',
   'install.pkg.grid': 'Data grid (virtualization, sort/filter, Excel compatible).',
   'install.pkg.editor': 'Rich text WYSIWYG editor (zero dependencies).',
+  'install.pkg.effect':
+    'Visual effect components — Typewriter, RotatingWords, ScrambleText, SplitTextReveal, CountUp. Zero deps, Tailwind-independent.',
+  'install.effectNote':
+    'React peer only. Inline-style based — works in any React app. Honors prefers-reduced-motion automatically.',
   'install.pkg.chart':
     'Chart library — Canvas-based on chart.js (Bar / Line / Area / Pie / Doughnut).',
   'install.chartDepsNote':
@@ -631,6 +730,18 @@ const en: Dict = {
   'a11y.shortcut.homeEnd': 'Go to first / last',
   'a11y.shortcutKeyLabel': 'Keys',
   'a11y.shortcutActionLabel': 'Action',
+  // Effect package — motion accessibility
+  'a11y.motionTitle': 'Motion & animation (@baneung-pack/effect)',
+  'a11y.motionIntro':
+    'All 13 visual effect components follow the same principles for users with motion-reduction preferences and assistive tech.',
+  'a11y.motion.reduced':
+    'Auto-respects `prefers-reduced-motion: reduce` — when the OS setting is on, all animations switch to a static final state immediately (entry effects display fully shown right away).',
+  'a11y.motion.ariaLabel':
+    '`aria-label` exposes the original text to screen readers as one piece — split-letter spans are not read individually.',
+  'a11y.motion.ariaHidden':
+    'Letter / channel spans split for animation use `aria-hidden="true"` — invisible to assistive tech.',
+  'a11y.motion.touch':
+    'Hover-based interactions (VariableFontHover / SpotlightText / GravityText hover trigger) are naturally inactive on touch devices — content is never made inaccessible.',
 };
 
 export const dictionaries: Record<Locale, Dict> = { ko, en };

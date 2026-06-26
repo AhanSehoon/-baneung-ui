@@ -179,8 +179,8 @@ export const componentPreviews: Record<string, () => React.ReactElement> = {
     </div>
   ),
   calendar: () => (
-    <div className="origin-center scale-75">
-      <Calendar />
+    <div className="origin-center scale-50">
+      <Calendar events={[]} />
     </div>
   ),
   'date-picker': () => (

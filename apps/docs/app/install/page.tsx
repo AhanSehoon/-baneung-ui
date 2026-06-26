@@ -46,6 +46,9 @@ export default function InstallPage() {
           <li>
             <code>@baneung-pack/chart</code> — {t('install.pkg.chart')}
           </li>
+          <li>
+            <code>@baneung-pack/effect</code> — {t('install.pkg.effect')}
+          </li>
         </ul>
         <Muted className="text-xs">{t('install.commonPeerDeps')}</Muted>
       </section>
@@ -328,6 +331,55 @@ export default function MyPage() {
             </pre>
           </CardContent>
         </Card>
+      </section>
+
+      <Separator />
+
+      {/* ─────────────────────────────── effect ─────────────────────────────── */}
+      <section className="flex flex-col gap-4">
+        <Heading level={2} className="text-2xl">
+          @baneung-pack/effect
+        </Heading>
+        <Card>
+          <CardContent>
+            <pre className="overflow-x-auto bg-surface p-3 text-xs font-mono">
+              <code>{`# pnpm
+pnpm add @baneung-pack/effect
+
+# npm
+npm install @baneung-pack/effect
+
+# yarn
+yarn add @baneung-pack/effect`}</code>
+            </pre>
+          </CardContent>
+        </Card>
+
+        <Heading level={3} className="text-lg">
+          {t('install.usage')}
+        </Heading>
+        <Card>
+          <CardContent>
+            <pre className="overflow-x-auto bg-surface p-3 text-xs font-mono">
+              <code>{`// Typewriter / RotatingWords / ScrambleText / SplitTextReveal / CountUp
+import { Typewriter, RotatingWords, CountUp } from '@baneung-pack/effect';
+
+export function Hero() {
+  return (
+    <>
+      <Typewriter text="함께 만들 프로젝트가 있으신가요?" loop />
+      <span>
+        We build{' '}
+        <RotatingWords words={['apps', 'agents', 'sites']} color="#3B716C" fontWeight={700} />
+      </span>
+      <CountUp to={1234567} fontSize={48} fontWeight={800} trigger="inView" />
+    </>
+  );
+}`}</code>
+            </pre>
+          </CardContent>
+        </Card>
+        <Muted className="text-xs">{t('install.effectNote')}</Muted>
       </section>
 
       <Separator />

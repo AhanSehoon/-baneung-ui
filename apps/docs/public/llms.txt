@@ -2,7 +2,7 @@
 
 > @baneung-pack — React design system from Pangyo, Korea.
 > Sharp/angular design, WCAG AA accessibility, Korean-first typography.
-> Ships UI / Grid / Chart / Editor packages with a unified token system.
+> Ships UI / Grid / Chart / Editor / Effect packages with a unified token system.
 
 ## Packages
 
@@ -10,6 +10,7 @@
 - [@baneung-pack/grid](https://www.npmjs.com/package/@baneung-pack/grid): 가상화 · Excel 내보내기 · 컬럼 고정 · Tree · 인라인 편집 지원 데이터 그리드.
 - [@baneung-pack/chart](https://www.npmjs.com/package/@baneung-pack/chart): Chart.js 기반 차트 라이브러리. 한글 숫자 포맷, sr-only 접근성 표 일급 지원.
 - [@baneung-pack/editor](https://www.npmjs.com/package/@baneung-pack/editor): WYSIWYG 리치텍스트 에디터. 이미지 붙여넣기, 커스텀 툴바, 0-dependency 코어.
+- [@baneung-pack/effect](https://www.npmjs.com/package/@baneung-pack/effect): 13개 React 비주얼 이펙트 (Typewriter · RotatingWords · ScrambleText · SplitTextReveal · CountUp · GradientText · BlurInText · WavyText · GlitchText · VariableFontHover · CircularText · GravityText · SpotlightText). 0-dependency 코어, Tailwind 비종속, prefers-reduced-motion 자동 존중.
 - [@baneung-pack/tokens](https://www.npmjs.com/package/@baneung-pack/tokens): 디자인 토큰 (CSS 변수 · TS · JSON). 단일 진실 공급원(SSOT).
 
 ## Core Principles
@@ -76,6 +77,29 @@ Typography · Field · Form ... (60+ 컴포넌트)
 - [기본](/editor/basic) · [풀 기능](/editor/full) · [Controlled 모드](/editor/controlled)
 - [이미지 붙여넣기](/editor/image) · [커스텀 툴바](/editor/custom-toolbar) · [읽기 전용](/editor/readonly)
 - 0-dependency 코어 (외부 에디터 SDK 미사용)
+
+### Effects (@baneung-pack/effect)
+
+13개 비주얼 이펙트 — 0-dependency, Tailwind 비종속, `prefers-reduced-motion` 자동 존중. 모든 컴포넌트는 `aria-label`로 원문을 스크린리더에 노출.
+
+타이포그래피 모션:
+- [Typewriter](/effect/typewriter) — 한 글자씩 등장 + 깜빡이는 커서 (1회 / loop)
+- [RotatingWords](/effect/rotating-words) — "We build [apps]" 단어 슬라이드 순환
+- [ScrambleText](/effect/scramble-text) — 해킹/디코딩 스타일 (Matrix 효과 가능)
+- [SplitTextReveal](/effect/split-text-reveal) — 글자/단어 단위 순차 페이드+슬라이드 (mount/inView)
+- [BlurInText](/effect/blur-in-text) — 흐릿→선명 등장 (mount/inView)
+- [WavyText](/effect/wavy-text) — 글자가 파도치거나 통통 튐
+- [GlitchText](/effect/glitch-text) — RGB 채널 어긋남 (always/hover)
+
+타이포그래피 표현:
+- [GradientText](/effect/gradient-text) — 그라데이션 흐름/반짝 (flow/shimmer)
+- [VariableFontHover](/effect/variable-font-hover) — 커서 주변 글자만 굵어짐 (가변 폰트)
+- [SpotlightText](/effect/spotlight-text) — 커서 주변만 밝아지는 스포트라이트
+- [CircularText](/effect/circular-text) — 원형 경로 회전 텍스트 (배지)
+
+데이터/물리:
+- [CountUp](/effect/count-up) — 숫자 카운터 (천 단위·소수점·prefix/suffix, mount/inView)
+- [GravityText](/effect/gravity-text) — 글자가 중력에 떨어지거나 흩어짐 (mount/hover/inView)
 
 ## License
 

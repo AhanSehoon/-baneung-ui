@@ -292,7 +292,7 @@ export const layoutComponents: ComponentSpec[] = [
     Example: () => (
       <Direction dir="rtl">
         <div className="border border-border-default p-3 text-sm" dir="rtl">
-          مرحبا (RTL 컨텍스트 안의 자식 — Radix 컴포넌트는 자동 방향 전환)
+          (RTL 컨텍스트 안의 자식 — Radix 컴포넌트는 자동 방향 전환)
         </div>
       </Direction>
     ),
