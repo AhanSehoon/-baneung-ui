@@ -42,12 +42,15 @@ export const CommandInput = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Input>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.Input>
 >(function CommandInput({ className, ...props }, ref) {
+  // 포커스 인디케이터는 wrapper의 bottom-border 색 변경(focus-within:border-ring)으로 표시.
+  // input 자체의 outline은 globals.css의 :focus-visible 규칙이 input을 :not()으로 제외하므로
+  // 안 그려짐 → 부모 overflow-hidden에 상단이 클리핑되는 문제 없음.
   return (
-    <div className="flex items-center border-b border-border-default px-3">
+    <div className="flex items-center border-b border-border-default px-3 focus-within:border-ring">
       <CommandPrimitive.Input
         ref={ref}
         className={cn(
-          'flex h-10 w-full bg-transparent py-2 text-sm outline-none',
+          'flex h-10 w-full bg-transparent py-2 text-sm',
           'placeholder:text-foreground-subtle',
           'disabled:cursor-not-allowed disabled:opacity-60',
           className,

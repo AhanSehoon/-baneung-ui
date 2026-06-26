@@ -108,10 +108,40 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* 키보드 포커스 — 마우스 클릭 포커스는 :focus-visible로 가드 */
-  :focus-visible {
+  /*
+   * 키보드 포커스 — 마우스 클릭 포커스는 :focus-visible로 가드.
+   *
+   * input/textarea/select와 명시적으로 `data-focus-managed`가 표시된 요소는 제외.
+   * 이유: form 컨트롤은 wrapper(예: Command.Input의 border-b focus-within)나
+   * 컴포넌트 자체(Button의 focus-visible:outline-2 등)가 포커스를 책임지며,
+   * 전역 outline이 부모 overflow에 클리핑되거나 컴포넌트 내부 시각과 중복됨.
+   * `data-focus-managed`는 컴포넌트가 "내가 알아서 한다"고 선언하는 opt-out 마커.
+   */
+  :focus-visible:not(input):not(textarea):not(select):not([data-focus-managed]) {
     outline: 2px solid var(--color-focus-ring);
     outline-offset: 2px;
+  }
+
+  /*
+   * input/textarea/select — 브라우저 native focus outline 제거.
+   * 라이브러리 컴포넌트는 wrapper의 focus-within 또는 컴포넌트 자체 스타일로 포커스
+   * 시각화. 브라우저 기본 outline은 시각 중복/충돌만 일으킴.
+   * RAW input/textarea/select를 컴포넌트 없이 직접 쓰는 경우 소비자가 직접 focus
+   * 스타일을 부여해야 함.
+   */
+  input:focus,
+  input:focus-visible,
+  textarea:focus,
+  textarea:focus-visible,
+  select:focus,
+  select:focus-visible {
+    outline: none;
+  }
+
+  /* 텍스트 입력 caret 색 — 토큰 사용 (라이트/다크 자동) */
+  input,
+  textarea {
+    caret-color: var(--color-text-primary);
   }
 
   /* 한글 IME 조합 중인 텍스트 — 브라우저 기본 보존 */

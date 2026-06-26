@@ -44,10 +44,12 @@ export * from './components/switch';
 export * from './components/textarea';
 
 // Phase 6 — Selection
-export * from './components/calendar';
+// Calendar는 event-calendar에서 export (월간 일정 캘린더로 통합).
+// 옛 calendar/ 폴더는 DatePicker 내부 전용으로 유지 (퍼블릭 export 안 함).
 export * from './components/combobox';
 export * from './components/command';
 export * from './components/date-picker';
+export * from './components/event-calendar';
 export * from './components/native-select';
 export * from './components/select';
 
@@ -93,5 +95,15 @@ export * from './components/chart';
 export * from './components/collapsible';
 export * from './components/data-table';
 export * from './components/table';
+
+// Phase 12 — Effect 패키지에서 이전된 인터랙션 컴포넌트.
+// (Toast/Skeleton/Checkbox/Switch(=Toggle)/Progress(=ProgressBar)는 이미 위에 있어 머지 X)
+export * from './components/animated-button';
+export * from './components/animated-tabs';
+export * from './components/copy-button';
+export * from './components/like-button';
+export * from './components/loaders';
+export * from './components/star-rating';
+export * from './components/stepper';
 
 export const VERSION = '0.0.0';

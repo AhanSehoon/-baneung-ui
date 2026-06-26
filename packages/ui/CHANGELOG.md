@@ -1,5 +1,79 @@
 # @baneung-pack/ui
 
+## 2.0.0
+
+### Major Changes
+
+- # BREAKING — Calendar 재구현
+
+  기존 `Calendar`(react-day-picker 단순 래퍼)를 제거하고, **월간 일정 캘린더**(Google Calendar 월간 뷰 스타일)로 교체.
+
+  ## Before (v1.x)
+
+  ```tsx
+  <Calendar mode="single" selected={date} onSelect={setDate} />
+  ```
+
+  ## After (v2.x)
+
+  ```tsx
+  <Calendar
+    events={[
+      { id: '1', start, end, title: '회의', color: 'blue' },
+      { id: '2', start, end, title: '워크샵', color: 'green' },
+    ]}
+    onEventClick={(e) => ...}
+    onEventMove={(e, start, end) => ...}
+  />
+  ```
+
+  ## 마이그레이션
+  - 날짜 선택(date picking) 용도라면 **`DatePicker` 컴포넌트 사용** — 내부적으로 date-picking grid 유지.
+  - 일정 표시 용도라면 신규 Calendar API로 — `events` prop 필수.
+
+  ## Calendar 신규 기능
+  - 1일 일정 + 다일 range 일정 (가로 막대) + 주 경계 ◀/▶ 분할 + greedy lane 알고리즘 (다중 일정 세로 스택)
+  - "+N 더보기" Popover · HTML5 드래그-드롭 이동 (`onEventMove`)
+  - 한글 기본 + `locale: 'ko' | 'en' | 'ja' | 'zh-CN' | date-fns Locale`
+  - 년/월 변경 — 토큰화 Radix Popover 드롭다운 (✓ 체크 / 자동 스크롤 / 토큰 스크롤바)
+  - 일/토 색상 구분, 오늘 강조, outside days 회색
+
+  ## DatePicker 캡션 일관화
+  - 자체 `MonthCaption` 적용 — `‹ / 2026년 ▾ / 6월 ▾ / ›` 한 줄 가로 정렬
+  - 같은 Popover 드롭다운 디자인 공유 (Calendar와 일관)
+
+  ***
+
+  # 새 컴포넌트 — `@baneung-pack/effect`에서 통합 이전 (7+)
+  - **AnimatedButton** — idle → loading → success/error 모핑 (Promise 자동 처리)
+  - **AnimatedTabs** — 활성 인디케이터 슬라이드 탭 + Arrow 키
+  - **CopyButton** — 클립보드 복사 + 아이콘 모핑 + 툴팁
+  - **LikeButton** — 하트 + burst 입자 + 카운트
+  - **StarRating** — 별점 (half/hover/키보드/readOnly)
+  - **Stepper** — 다단계 진행 표시기 (horizontal/vertical, 연결선 애니메이션)
+  - **Dots / Bars / Ring** — 추가 Loader 변형 (Spinner 외)
+  - **Skeleton 강화** — `variant='shimmer'` 추가 + `SkeletonText` · `SkeletonCircle` 헬퍼
+
+  ***
+
+  # 수정 / 개선
+
+  ## globals.css — focus 시각 분리
+  - 전역 `:focus-visible { outline }` 규칙을 `:not(input):not(textarea):not(select)`로 범위 축소 → form 컨트롤은 wrapper/컴포넌트가 자체 포커스 시각 책임
+  - `input/textarea/select` native focus outline 제거 + caret-color 토큰화
+  - 데이터 컴포넌트가 일관된 focus indicator를 제공하도록 디자인 시스템 일관성 회복
+
+  ## Select — `ring-inset` 시각 + accent bar
+  - 강조된 옵션이 보더 클리핑되지 않게 좌측 accent bar 패턴 적용
+
+  ## Command — 검색 입력 outline 제거
+  - Wrapper의 `focus-within:border-ring` 으로 포커스 시각화 — 상단 클리핑 이슈 해결
+
+  ## NavigationMenu — Viewport / Content 위치 수정
+  - Viewport wrapper `inset-x-0` + Viewport `w-full md:w-(--radix-...)` — sm 화면에서 viewport가 0px로 잘리는 버그 수정
+  - Content `md:absolute md:w-auto` — 트리거와 겹치지 않게 데스크톱에서 Viewport에 portal
+  - 불안정한 motion 애니메이션 제거 → opacity 0 잔류 버그 해결
+
 ## 1.0.12
 
 ### Patch Changes

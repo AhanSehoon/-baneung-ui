@@ -363,8 +363,17 @@ export function Select(props: SelectProps): React.ReactElement {
                     onSelect={(): void => handleSelect(opt.value)}
                     className={cn(
                       'relative flex cursor-default select-none items-center gap-2',
-                      'px-2 py-1.5 text-sm rounded-none outline-none',
+                      'pl-3 pr-2 py-1.5 text-sm rounded-none outline-none',
+                      // 선택/포커스 시각화 — bg 변경 + 좌측 accent bar (::before pseudo).
+                      // - bg: 항목 전체 강조
+                      // - accent bar: 좌측 3px 세로 막대 (focus-ring 색) — VS Code/Linear 스타일
+                      //   pseudo-element는 item 박스 안에 absolute로 그려져 overflow에 클리핑되지 않고
+                      //   상단/하단이 명확히 보임. (이전 ring-inset은 Tailwind v4의 ring-color 매핑
+                      //   불일치로 안 보였음.)
                       'data-[selected=true]:bg-surface-strong data-[selected=true]:text-foreground',
+                      'data-[selected=true]:before:absolute data-[selected=true]:before:inset-y-0',
+                      'data-[selected=true]:before:left-0 data-[selected=true]:before:w-0.75',
+                      'data-[selected=true]:before:bg-ring data-[selected=true]:before:content-[""]',
                       'data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-60',
                     )}
                   >

@@ -81,9 +81,10 @@ export const NavigationMenuContent = React.forwardRef<
     <NavigationMenuPrimitive.Content
       ref={ref}
       className={cn(
-        'absolute left-0 top-0 w-full',
-        'data-[motion^=from-]:animate-in data-[motion^=to-]:animate-out',
-        'data-[motion^=from-]:fade-in data-[motion^=to-]:fade-out',
+        // shadcn 패턴 — Radix가 활성화된 Content를 Viewport에 측정/teleport.
+        // 모바일: 인라인(static), 데스크톱: absolute + w-auto로 viewport 안에 배치.
+        // (이전 'absolute' 단독은 NavigationMenuItem 기준으로 위치 잡혀 트리거와 겹침.)
+        'left-0 top-0 w-full md:absolute md:w-auto',
         className,
       )}
       {...props}
@@ -99,14 +100,18 @@ export const NavigationMenuViewport = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Viewport>
 >(function NavigationMenuViewport({ className, ...props }, ref) {
   return (
-    <div className="absolute left-0 top-full flex justify-center">
+    // wrapper는 absolute + inset-x-0로 Root의 가로 전체 폭을 차지 →
+    // 그 안에서 flex justify-center로 Viewport 중앙 정렬.
+    // (이전 wrapper에 inset-x-0 누락 → w-full이 0이 돼 viewport가 0px 폭으로 잘림.)
+    <div className="absolute inset-x-0 top-full flex justify-center">
       <NavigationMenuPrimitive.Viewport
         ref={ref}
         className={cn(
-          'origin-top-center relative mt-1.5 h-[var(--radix-navigation-menu-viewport-height)]',
-          'w-full overflow-hidden bg-canvas text-foreground',
+          'origin-top-center relative mt-1.5',
+          'h-(--radix-navigation-menu-viewport-height)',
+          'w-full md:w-(--radix-navigation-menu-viewport-width)',
+          'overflow-hidden bg-canvas text-foreground',
           'border border-border-default rounded-none shadow-md',
-          'md:w-[var(--radix-navigation-menu-viewport-width)]',
           className,
         )}
         {...props}
@@ -124,7 +129,7 @@ export const NavigationMenuIndicator = React.forwardRef<
     <NavigationMenuPrimitive.Indicator
       ref={ref}
       className={cn(
-        'top-full z-[1] flex h-1.5 items-end justify-center overflow-hidden',
+        'top-full z-1 flex h-1.5 items-end justify-center overflow-hidden',
         'data-[state=visible]:animate-in data-[state=hidden]:animate-out',
         'data-[state=visible]:fade-in data-[state=hidden]:fade-out',
         className,

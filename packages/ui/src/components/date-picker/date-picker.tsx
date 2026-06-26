@@ -3,7 +3,8 @@ import * as React from 'react';
 
 import { cn } from '../../lib/cn';
 import { useControllableState } from '../../lib/use-controllable-state';
-import { Calendar } from '../calendar';
+import { Calendar, type CalendarProps } from '../calendar';
+import { DatePickerCalendarCaption } from '../calendar/date-picker-caption';
 import { useFieldContext } from '../field/field-context';
 
 export interface DatePickerProps {
@@ -16,6 +17,12 @@ export interface DatePickerProps {
   formatDate?: (date: Date) => string;
   /** 비활성 날짜 매처 (예: 미래 날짜만 허용). */
   disabledDates?: Date[] | ((date: Date) => boolean);
+  /**
+   * 캘린더 표시 언어. 기본 'ko'(한국어).
+   * 'ko' | 'en' | 'ja' | 'zh-CN' 단축 키워드 또는 date-fns Locale 객체.
+   * 그 외 언어는 `import { fr } from 'date-fns/locale'` 후 객체 전달.
+   */
+  locale?: CalendarProps['locale'];
   className?: string;
   id?: string;
   'aria-label'?: string;
@@ -60,6 +67,7 @@ export function DatePicker(props: DatePickerProps): React.ReactElement {
     disabled: disabledProp,
     formatDate = isoFormat,
     disabledDates,
+    locale,
     className,
     id: idProp,
     'aria-label': ariaLabel,
@@ -108,7 +116,9 @@ export function DatePicker(props: DatePickerProps): React.ReactElement {
           align="start"
           sideOffset={4}
           className={cn(
-            'z-50 overflow-hidden bg-canvas text-foreground',
+            // w-auto + min-w로 calendar 자연 크기 보장. overflow-hidden 제거 — native select picker가
+            // popover 영역 밖으로 펼쳐질 수 있어야 함 (모바일 OS picker 포함).
+            'z-50 w-auto min-w-70 bg-canvas text-foreground',
             'border border-border-default rounded-none shadow-md',
           )}
         >
@@ -117,6 +127,12 @@ export function DatePicker(props: DatePickerProps): React.ReactElement {
             selected={value}
             onSelect={handleSelect}
             disabled={disabledDates}
+            locale={locale}
+            // 커스텀 MonthCaption — prev / 년 picker / 월 picker / next를 한 줄에 정렬.
+            // react-day-picker 기본 nav/dropdown은 비활성 (커스텀 캡션이 모두 담당).
+            captionLayout="label"
+            hideNavigation
+            components={{ MonthCaption: DatePickerCalendarCaption }}
             initialFocus
           />
         </PopoverPrimitive.Content>
