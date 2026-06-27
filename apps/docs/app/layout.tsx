@@ -12,7 +12,7 @@ import type { Metadata, Viewport } from 'next';
 // CSS spec상 unlayered > layered이므로 docs의 .md\:flex 같은 반응형 utility가
 // 라이브러리의 .hidden(layered)을 자연스럽게 override한다.
 //
-// grid styles.css도 같은 @layer baneung을 사용하므로 ui 다음에 import해 layer 머지.
+// grid styles.css도 같은 @layer baneung을 사용하므로 ui 다음에 import해 layer 머지한다.
 import '@baneung-pack/ui/styles.css';
 import '@baneung-pack/grid/styles.css';
 import '@baneung-pack/editor/styles.css';
