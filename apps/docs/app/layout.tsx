@@ -1,4 +1,4 @@
-import { GoogleTagManager } from '@next/third-parties/google';
+import { GoogleAnalytics } from '@next/third-parties/google';
 
 import { I18nProvider } from '@/components/i18n-provider';
 import { SiteShell } from '@/components/site-shell';
@@ -135,20 +135,20 @@ export const viewport: Viewport = {
 };
 
 /**
- * Google Tag Manager — `NEXT_PUBLIC_GTM_ID` 환경변수가 있으면 GTM 스크립트 주입.
- * GTM 컨테이너 안에서 GA·픽셀 등 모든 태그를 통합 관리.
+ * Google Analytics 4 — `NEXT_PUBLIC_GA_ID` 환경변수가 있으면 gtag.js 스크립트 주입.
+ * GTM을 거치지 않고 GA4 측정 ID(G-XXXXXXXXXX)로 다이렉트 연동.
  * 미지정(로컬 dev / 미설정 환경) 시 스킵 → 분석 트래픽이 없는 환경을 자연스럽게 차단.
  *
  * 설정 방법:
- *   - Vercel: Project Settings → Environment Variables → NEXT_PUBLIC_GTM_ID = GTM-XXXXXXX
- *   - 로컬: apps/docs/.env.local 에 NEXT_PUBLIC_GTM_ID=GTM-XXXXXXX
+ *   - Vercel: Project Settings → Environment Variables → NEXT_PUBLIC_GA_ID = G-XXXXXXXXXX
+ *   - 로컬: apps/docs/.env.local 에 NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
  */
-const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID;
+const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko" suppressHydrationWarning>
-      {GTM_ID && <GoogleTagManager gtmId={GTM_ID} />}
+      {GA_ID && <GoogleAnalytics gaId={GA_ID} />}
       <head>
         {/* JSON-LD 구조화 데이터 — 일반 검색엔진(Google/Naver/Bing) +
             GEO(AI 검색엔진/ChatGPT Search/Perplexity)가 모두 활용.
